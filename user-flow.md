@@ -1,67 +1,38 @@
-# User Flow — Student Expense Tracker
+# 🔄 User Flow & Journey Maps
 
-## Main Goal
-Help a student record pocket-money spending and understand where the money went.
+## 1. Visitor Flow (Non-Authenticated Discovery)
+```
+Landing Page 
+  ├──> Views Public Hero & National Student Spending Benchmarks
+  ├──> Reads Live AI Savings & Micro-expense Tips
+  ├──> Explores Dashboard in Guest Mode (No signup required)
+  └──> One-Click Options:
+        ├── Continue exploring in Guest Demo Mode
+        └── Click "Sign Up Free" -> Modal -> Creates MongoDB Atlas Account
+```
 
-## Flow 1: First Visit
-Start
-→ Open app
-→ See welcome/dashboard
-→ Set monthly pocket-money budget
-→ Dashboard displays budget = amount entered
-→ Add first expense
+---
 
-## Flow 2: Add Expense
-Dashboard
-→ Tap **Add Expense**
-→ Enter amount
-→ Choose category
-→ Add optional note
-→ Confirm
-→ Expense is saved
-→ Dashboard totals update
-→ Recent transaction appears
-
-## Flow 3: Check Where Money Went
-Dashboard
-→ View total spent
-→ View remaining budget
-→ View category breakdown
-→ Select a category
-→ See transactions in that category
-
-## Flow 4: Review History
-Dashboard
-→ Open **Transactions**
-→ View recent expenses
-→ Filter by category
-→ Review amount/date/note
-→ Delete incorrect transaction
-→ Totals update automatically
-
-## Flow 5: Budget Warning
-Dashboard
-→ Spending reaches 80% of budget
-→ Show warning
-→ Spending reaches 100%
-→ Show budget exceeded state
-→ User can continue recording expenses while seeing the negative/zero remaining balance
-
-## Navigation
-- Dashboard
-- Add Expense
-- Transactions
-- Settings/Budget
-
-## Empty State
-If no expenses exist:
-“Your spending will appear here. Add your first expense to start tracking.”
-
-## Error States
-- Amount missing: “Enter an amount.”
-- Amount is zero/negative: “Enter an amount greater than 0.”
-- Category missing: “Choose a category.”
-- Invalid budget: “Enter a valid monthly budget.”
-
-## UX Principle
-The app should require as few taps and fields as possible. The student should understand the spending summary immediately after opening the app.
+## 2. Authenticated Student Flow
+```
+Open App
+  ├──> Log In with Email & Password (or Sign Up)
+  ├──> Dashboard renders real-time MongoDB data:
+  │     ├── Monthly Pocket Budget
+  │     ├── Total Spent & Remaining Balance
+  │     ├── Safe Daily Spending Allowance
+  │     ├── Budget Health Status (Normal / 80% Alert / Exceeded)
+  │     ├── AI Health Audit & Recommendations
+  │     └── Category Breakdown Chart (Chart.js)
+  │
+  ├──> Adding an Expense:
+  │     ├── Fast Route: Type casual text in "AI Fast Logger" -> Instant save
+  │     └── Form Route: Click "+ Add Expense" -> Modal -> Select Category & Save
+  │
+  ├──> Interacting with AI Coach:
+  │     ├── Click quick prompt chips (e.g. "Save ₹1,000", "50/30/20 Rule")
+  │     └── Type custom financial questions -> Get tailored guidance
+  │
+  └──> Budget Adjustment:
+        └── Click "Set Monthly Budget" -> Enter amount or pick preset -> Live update
+```

@@ -3,130 +3,829 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Student Expense Tracker</title>
+  <meta name="color-scheme" content="light">
+  <title>SpendWise · Smart Student Pocket Money & Expense Intelligence</title>
   <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  <main class="app">
-    <header class="header">
-      <div>
-        <p class="eyebrow">STUDENT FINANCE</p>
-        <h1>Expense Tracker</h1>
-        <p class="subtitle">Know where your pocket money goes.</p>
-      </div>
-      <button id="budgetBtn" class="secondary-btn">Set Budget</button>
-    </header>
 
-    <section class="summary-grid">
-      <article class="card">
-        <span>Monthly Budget</span>
-        <strong id="budgetAmount">₹0</strong>
-      </article>
-      <article class="card">
-        <span>Spent This Month</span>
-        <strong id="spentAmount">₹0</strong>
-      </article>
-      <article class="card">
-        <span>Remaining</span>
-        <strong id="remainingAmount">₹0</strong>
-      </article>
-    </section>
-
-    <section class="card progress-card">
-      <div class="section-heading">
-        <div>
-          <h2>Budget progress</h2>
-          <p id="progressText">Set a budget to start tracking.</p>
-        </div>
-        <button id="addBtn" class="primary-btn">+ Add Expense</button>
-      </div>
-      <div class="progress-track">
-        <div id="progressBar" class="progress-bar"></div>
-      </div>
-    </section>
-
-    <section class="content-grid">
-      <article class="card">
-        <div class="section-heading">
-          <div>
-            <h2>Where your money went</h2>
-            <p>This month by category</p>
+  <!-- MONARCH-STYLE APP WRAPPER -->
+  <div class="monarch-layout">
+    
+    <!-- LEFT SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-top">
+        <div class="brand-header">
+          <div class="brand-logo">₹</div>
+          <div class="brand-text-group">
+            <span class="brand-title">SpendWise</span>
+            <span class="brand-edition">Student Edition</span>
           </div>
         </div>
-        <div id="categoryBreakdown" class="category-list"></div>
-      </article>
 
-      <article class="card">
-        <div class="section-heading">
-          <div>
-            <h2>Recent expenses</h2>
-            <p>Your latest transactions</p>
+        <div class="sidebar-db-status" id="sidebarDbStatus">
+          <span class="pulse-dot"></span>
+          <span id="dbStatusLabel">MongoDB Atlas</span>
+        </div>
+
+        <!-- Sidebar Navigation Items -->
+        <nav class="sidebar-nav">
+          <button class="nav-item active" data-tab="dashboard">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+            <span>Dashboard</span>
+          </button>
+          <button class="nav-item" data-tab="tour">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+            <span>How It Works</span>
+          </button>
+          <button class="nav-item" data-tab="transactions">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+            <span>Transactions</span>
+          </button>
+          <button class="nav-item" data-tab="choice-lab" title="Campus Choice Lab">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19h16"></path><path d="M7 16V9"></path><path d="M12 16V5"></path><path d="M17 16v-4"></path></svg>
+            <span>Choice Lab</span>
+          </button>
+          <button class="nav-item" data-tab="bill-split" title="Campus Bill Splitter">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3"></circle><path d="M3 20v-1a6 6 0 0 1 12 0v1"></path><path d="M16 11a3 3 0 1 0 0-6"></path><path d="M18 14a5 5 0 0 1 3 5v1"></path></svg>
+            <span>Split a Bill</span>
+          </button>
+          <button class="nav-item" data-tab="allocator">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
+            <span>50/30/20 Planner</span>
+          </button>
+          <button class="nav-item" data-tab="goals">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+            <span>Savings Goals</span>
+          </button>
+          <button class="nav-item" data-tab="advisor">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+            <span>AI Coach</span>
+          </button>
+        </nav>
+      </div>
+
+      <!-- User Profile at bottom -->
+      <div class="sidebar-bottom">
+        <div class="user-card-widget">
+          <div class="user-avatar-circle">🎓</div>
+          <div class="user-details">
+            <span class="user-fullname" id="navUserName">Student User</span>
+            <span class="user-budget-text" id="navUserBudget">₹5,000 / mo</span>
           </div>
         </div>
-        <div id="transactionList" class="transaction-list"></div>
-      </article>
-    </section>
-  </main>
-
-  <dialog id="expenseDialog">
-    <form id="expenseForm" method="dialog" class="dialog-card">
-      <div class="dialog-header">
-        <div>
-          <p class="eyebrow">NEW TRANSACTION</p>
-          <h2>Add expense</h2>
+        <div class="auth-btn-row" id="authBtnRow">
+          <button class="btn-sidebar-auth" id="openLoginBtn">Log in</button>
+          <button class="btn-sidebar-auth primary" id="openSignupBtn">Sign up</button>
         </div>
-        <button type="button" id="closeExpense" class="icon-btn">×</button>
+        <button class="btn-sidebar-logout hidden" id="logoutBtn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+          <span>Log out</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- MAIN VIEWPORT -->
+    <div class="main-viewport">
+      
+      <!-- TOP ACTION BAR -->
+      <header class="top-action-bar">
+        <div class="header-title-group">
+          <h2 class="view-title" id="currentViewTitle">Dashboard</h2>
+          <span class="month-badge" id="monthBadge">October 2026</span>
+        </div>
+
+        <div class="top-actions">
+          <button class="btn btn-outline" id="btnOpenCommandPalette" title="Quick Command Palette (Ctrl+K)">
+            <span>🔍 Search / Quick Actions</span>
+            <kbd class="kbd-badge">Ctrl+K</kbd>
+          </button>
+          <button class="btn btn-outline" id="setBudgetBtn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+            <span>Set Budget</span>
+          </button>
+          <button class="btn btn-primary" id="openAddExpenseBtn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            <span>+ Add Expense</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- SCROLLABLE BODY -->
+      <div class="dashboard-scrollable">
+
+        <!-- 1. INSTANT VALUE & WHAT THIS WEBSITE DOES (ONBOARDING HERO) -->
+        <section class="widget-card onboarding-banner" id="onboardingTourCard">
+          <div class="onboarding-header">
+            <div>
+              <span class="badge-tag blue">3-Step Student Pocket Money System</span>
+              <h2 class="onboard-heading">Never run out of pocket money before the month ends.</h2>
+              <p class="onboard-sub">SpendWise automatically calculates your safe daily spending allowance and detects canteen micro-spending before you overspend.</p>
+            </div>
+          </div>
+
+          <div class="how-it-works-grid">
+            <div class="step-card">
+              <div class="step-num">1</div>
+              <div class="step-content">
+                <h4>Set Monthly Pocket Limit</h4>
+                <p>Define your monthly pocket allowance (e.g. ₹5,000) and choose a 50/30/20 target.</p>
+              </div>
+            </div>
+
+            <div class="step-card">
+              <div class="step-num">2</div>
+              <div class="step-content">
+                <h4>Live-Type Any Expense</h4>
+                <p>Type casual text like <em>"180 canteen lunch"</em> — AI auto-detects category & amount in 2 seconds.</p>
+              </div>
+            </div>
+
+            <div class="step-card">
+              <div class="step-num">3</div>
+              <div class="step-content">
+                <h4>Track Safe Daily Cap</h4>
+                <p>Stay within your daily limit (e.g. ₹160/day) with instant 80% caution alerts.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Scenario Switchers (Demonstrates what user can do) -->
+          <div class="scenarios-bar">
+            <span class="scenario-label">Try Demo Scenarios:</span>
+            <button class="scenario-btn" data-scenario="normal">🍕 Regular College Week</button>
+            <button class="scenario-btn" data-scenario="exam">📚 Exam Prep & Books</button>
+            <button class="scenario-btn" data-scenario="party">🎉 Outing & Cafe Trip</button>
+            <button class="scenario-btn" data-scenario="reset">🔄 Reset Data</button>
+          </div>
+        </section>
+
+        <!-- 2. REAL-TIME LIVE EXPENSE SCANNER WIDGET -->
+        <section class="widget-card scanner-widget">
+          <div class="scanner-head">
+            <div class="scanner-title-badge">
+              <span class="pulse-icon">⚡</span>
+              <span>Real-Time Live Spending Scanner</span>
+            </div>
+            <span class="scanner-subtext">Type any expense in plain words (e.g. <em>"180 mess lunch"</em> or <em>"350 metro pass"</em>)</span>
+          </div>
+
+          <form id="liveDetectorForm" class="scanner-form-row">
+            <div class="scanner-input-wrap">
+              <input type="text" id="liveDetectorInput" placeholder="Type amount & description to see live instant detection..." autocomplete="off">
+            </div>
+            <button type="submit" class="btn btn-primary btn-record">Save Expense</button>
+          </form>
+
+          <!-- Live Detection Tag Bar -->
+          <div class="live-strip">
+            <div class="live-tags-group">
+              <span class="live-lead">Live Detection:</span>
+              <span class="live-pill amt" id="pillDetectedAmount">₹0.00</span>
+              <span class="live-pill cat" id="pillDetectedCategory">Category: -</span>
+              <span class="live-pill" id="pillDetectedNote">Note: -</span>
+              <span class="live-pill" id="pillDetectedMode">Mode: UPI</span>
+            </div>
+            <div class="live-impact-preview" id="liveImpactSummary">Remaining after: ₹5,000</div>
+          </div>
+
+          <!-- Quick Micro-Expense Test Chips -->
+          <div class="scanner-quick-chips">
+            <span class="quick-chip-label">Quick Test Chips:</span>
+            <button type="button" class="scanner-chip" data-sample="140 canteen thali">🍛 140 canteen thali</button>
+            <button type="button" class="scanner-chip" data-sample="60 metro pass">🚇 60 metro pass</button>
+            <button type="button" class="scanner-chip" data-sample="40 chai & samosa">☕ 40 chai & samosa</button>
+            <button type="button" class="scanner-chip" data-sample="80 xerox & lab notes">📚 80 xerox notes</button>
+            <button type="button" class="scanner-chip" data-sample="199 mobile recharge">📱 199 recharge</button>
+          </div>
+        </section>
+
+        <!-- 3. FINANCIAL SUMMARY METRIC TILES -->
+        <section class="metrics-tiles-grid">
+          <div class="metric-tile">
+            <div class="tile-top">
+              <span class="tile-label">Monthly Pocket Budget</span>
+              <span class="tile-icon">💰</span>
+            </div>
+            <div class="tile-number" id="valMonthlyBudget">₹5,000</div>
+            <div class="tile-footer">Monthly allowance limit</div>
+          </div>
+
+          <div class="metric-tile">
+            <div class="tile-top">
+              <span class="tile-label">Total Spent This Month</span>
+              <span class="tile-icon">💸</span>
+            </div>
+            <div class="tile-number" id="valTotalSpent">₹0</div>
+            <div class="tile-footer" id="valSpentCount">0 expenses logged</div>
+          </div>
+
+          <div class="metric-tile">
+            <div class="tile-top">
+              <span class="tile-label">Remaining Balance</span>
+              <span class="tile-icon">🛡️</span>
+            </div>
+            <div class="tile-number" id="valRemaining">₹5,000</div>
+            <div class="tile-footer" id="valRemainingPercent">100% available</div>
+          </div>
+
+          <div class="metric-tile">
+            <div class="tile-top">
+              <span class="tile-label">Safe Daily Allowance</span>
+              <span class="tile-icon">⏱️</span>
+            </div>
+            <div class="tile-number" id="valDailyCap">₹160<small>/day</small></div>
+            <div class="tile-footer" id="valDaysRemaining">for next 25 days</div>
+          </div>
+        </section>
+
+        <!-- 4. BUDGET RUNWAY & CONSUMPTION METER -->
+        <section class="widget-card">
+          <div class="widget-header-row">
+            <div class="widget-title-group">
+              <h3 class="widget-title">Budget Consumption & Health State</h3>
+              <span class="badge badge-success" id="budgetStatusPill">Within Safe Limit</span>
+            </div>
+            <div class="budget-pct-label" id="budgetPercentageText">0%</div>
+          </div>
+
+          <div class="meter-track">
+            <div class="meter-fill" id="mainProgressBar" style="width: 0%;"></div>
+          </div>
+
+          <div class="meter-scale">
+            <span>₹0 spent</span>
+            <span class="scale-warn">80% Alert Threshold</span>
+            <span id="budgetMaxLabel">Limit: ₹5,000</span>
+          </div>
+
+          <!-- AI Runway Forecast -->
+          <div class="runway-forecast-box" id="runwayForecastBox">
+            <span class="runway-icon">🚀</span>
+            <div class="runway-text" id="runwayText">
+              <strong>Pocket Money Runway:</strong> At your current pace, your pocket money is on track to last the entire month comfortably!
+            </div>
+          </div>
+        </section>
+
+        <section class="widget-card campus-lab" id="choiceLabSection" aria-labelledby="choiceLabTitle">
+          <div class="widget-header-row">
+            <div>
+              <span class="choice-lab-kicker">CAMPUS CHOICE LAB</span>
+              <h3 class="widget-title" id="choiceLabTitle">Small choices. Semester-sized totals.</h3>
+              <p class="widget-desc">Compare two recurring student-life choices before they become a habit.</p>
+            </div>
+            <span class="choice-live-mark"><span></span> Live comparison</span>
+          </div>
+
+          <div class="choice-lab-layout">
+            <div class="choice-lab-controls">
+              <div class="choice-options-grid">
+                <div class="choice-option choice-option-a">
+                  <span class="choice-option-label">OPTION A</span>
+                  <label for="choiceAName">Choice name</label>
+                  <input id="choiceAName" type="text" maxlength="36" value="Campus canteen">
+                  <div class="choice-input-pair">
+                    <div>
+                      <label for="choiceACost">Cost per visit</label>
+                      <div class="choice-number-wrap"><span>₹</span><input id="choiceACost" type="number" min="0.01" step="1" value="80" inputmode="decimal"></div>
+                    </div>
+                    <div>
+                      <label for="choiceAFrequency">Visits / week</label>
+                      <input id="choiceAFrequency" type="number" min="0" max="14" step="1" value="5" inputmode="numeric">
+                    </div>
+                  </div>
+                </div>
+
+                <div class="choice-option choice-option-b">
+                  <span class="choice-option-label">OPTION B</span>
+                  <label for="choiceBName">Choice name</label>
+                  <input id="choiceBName" type="text" maxlength="36" value="Cafe with friends">
+                  <div class="choice-input-pair">
+                    <div>
+                      <label for="choiceBCost">Cost per visit</label>
+                      <div class="choice-number-wrap"><span>₹</span><input id="choiceBCost" type="number" min="0.01" step="1" value="220" inputmode="decimal"></div>
+                    </div>
+                    <div>
+                      <label for="choiceBFrequency">Visits / week</label>
+                      <input id="choiceBFrequency" type="number" min="0" max="14" step="1" value="2" inputmode="numeric">
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="choice-lab-footer-controls">
+                <div class="choice-weeks-control">
+                  <label for="choiceSemesterWeeks">Semester length</label>
+                  <div class="choice-number-wrap"><input id="choiceSemesterWeeks" type="number" min="1" max="52" step="1" value="16" inputmode="numeric"><span>weeks</span></div>
+                </div>
+                <div class="choice-goal-control">
+                  <label for="choiceGoalSelect">Measure the gap against</label>
+                  <select id="choiceGoalSelect"></select>
+                </div>
+              </div>
+            </div>
+
+            <aside class="choice-lab-result" aria-live="polite">
+              <span class="choice-result-label">COST DIFFERENCE OVER <span id="choiceWeeksLabel">16</span> WEEKS</span>
+              <strong class="choice-delta" id="choiceDelta">₹6,400</strong>
+              <p class="choice-recommendation" id="choiceRecommendation">Campus canteen costs less over the semester.</p>
+              <div class="choice-totals">
+                <div><span id="choiceAResultName">Campus canteen</span><strong id="choiceATotal">₹6,400</strong></div>
+                <div><span id="choiceBResultName">Cafe with friends</span><strong id="choiceBTotal">₹7,040</strong></div>
+              </div>
+              <p class="choice-goal-impact" id="choiceGoalImpact">That difference could cover 61% of the remaining Semester College Trip goal.</p>
+            </aside>
+          </div>
+        </section>
+
+        <!-- 5. TWO COLUMN SPLIT (CASHFLOW & TRANSACTIONS TABLE) -->
+        <div class="dashboard-split-grid">
+          
+          <!-- Spending by Category & Donut Chart -->
+          <section class="widget-card">
+            <div class="widget-header-row">
+              <div>
+                <h3 class="widget-title">Spending by Category</h3>
+                <p class="widget-desc">Monthly pocket money distribution</p>
+              </div>
+              <button class="btn-refresh" id="refreshStatsBtn">🔄 Refresh</button>
+            </div>
+
+            <div class="chart-wrapper">
+              <canvas id="categoryChart" height="180"></canvas>
+            </div>
+
+            <div class="category-list-stack" id="categorySummaryList">
+              <!-- Dynamically rendered -->
+            </div>
+          </section>
+
+          <!-- Master Transactions Ledger -->
+          <section class="widget-card">
+            <div class="widget-header-row">
+              <div>
+                <h3 class="widget-title">Transactions Ledger</h3>
+                <p class="widget-desc">Live expenses synced to MongoDB Atlas</p>
+              </div>
+              <select id="categoryFilter" class="select-clean">
+                <option value="All">All Categories</option>
+                <option value="Food">Food & Canteen</option>
+                <option value="Transport">Transport & Commute</option>
+                <option value="Education">Education & Books</option>
+                <option value="Entertainment">Entertainment</option>
+                <option value="Shopping">Shopping & Stationery</option>
+                <option value="Health">Health & Fitness</option>
+                <option value="Utilities">Utilities & Bills</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
+            <div class="table-search-row">
+              <input type="text" id="transactionSearchInput" placeholder="🔍 Filter by merchant or note...">
+            </div>
+
+            <div class="table-container">
+              <table class="monarch-table">
+                <thead>
+                  <tr>
+                    <th>Item / Description</th>
+                    <th>Category</th>
+                    <th>Date</th>
+                    <th>Mode</th>
+                    <th class="text-right">Amount</th>
+                    <th class="text-center">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="transactionsTableBody">
+                  <!-- Dynamically populated -->
+                </tbody>
+              </table>
+              <div id="tableEmptyState" class="empty-table-msg hidden">
+                <p>No transactions found. Use the live scanner above to record one!</p>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <section class="widget-card bill-split-widget" id="billSplitSection" aria-labelledby="billSplitTitle">
+          <div class="widget-header-row">
+            <div>
+              <span class="bill-split-kicker">ROOMMATES & FRIENDS</span>
+              <h3 class="widget-title" id="billSplitTitle">Split the bill. Log only your share.</h3>
+              <p class="widget-desc">Work out an even split and see whether your group owes you or you owe them.</p>
+            </div>
+          </div>
+
+          <div class="bill-split-layout">
+            <div class="bill-split-fields">
+              <div class="form-group">
+                <label for="splitBillAmount">Total bill (₹)</label>
+                <input id="splitBillAmount" type="number" min="0.01" step="0.01" value="840" inputmode="decimal">
+              </div>
+              <div class="form-group">
+                <label for="splitPeople">People, including you</label>
+                <input id="splitPeople" type="number" min="2" max="20" step="1" value="4" inputmode="numeric">
+              </div>
+              <div class="form-group">
+                <label for="splitPaidAmount">Amount you paid (₹)</label>
+                <input id="splitPaidAmount" type="number" min="0" step="0.01" value="840" inputmode="decimal">
+              </div>
+              <div class="form-group">
+                <label for="splitPaymentMethod">Payment method</label>
+                <select id="splitPaymentMethod">
+                  <option value="UPI">UPI</option>
+                  <option value="Cash">Cash</option>
+                  <option value="Card">Card</option>
+                  <option value="NetBanking">Net banking</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="splitDescription">What was it for?</label>
+                <input id="splitDescription" type="text" maxlength="70" value="Shared campus meal">
+              </div>
+              <div class="form-group">
+                <label for="splitCategory">Expense category</label>
+                <select id="splitCategory">
+                  <option value="Food">Food & Canteen</option>
+                  <option value="Transport">Transport</option>
+                  <option value="Education">Education</option>
+                  <option value="Entertainment">Entertainment</option>
+                  <option value="Shopping">Shopping</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+            </div>
+
+            <aside class="bill-split-result" aria-live="polite">
+              <span class="bill-split-result-label">YOUR SHARE</span>
+              <strong class="bill-split-share" id="splitPerPerson">₹210.00</strong>
+              <div class="bill-split-settlement" id="splitSettlement">Group owes you ₹630.00</div>
+              <p class="bill-split-summary" id="splitSummary">You paid ₹840.00 of an ₹840.00 bill split 4 ways.</p>
+              <button type="button" class="btn btn-primary" id="logBillShareBtn">Log my ₹210.00 share</button>
+              <span class="bill-split-note">Only your share is added to your expense history.</span>
+            </aside>
+          </div>
+        </section>
+
+        <!-- 6. 50/30/20 INTERACTIVE STUDENT BUDGET ALLOCATOR -->
+        <section class="widget-card" id="allocatorSection">
+          <div class="widget-header-row">
+            <div>
+              <h3 class="widget-title">The 50/30/20 Student Pocket Money Rule</h3>
+              <p class="widget-desc">Visual calculator to balance Needs, Wants, and Savings</p>
+            </div>
+            <span class="badge badge-success">Smart Recommendation</span>
+          </div>
+
+          <div class="allocator-grid">
+            <div class="alloc-card alloc-needs">
+              <span class="alloc-label">50% Needs</span>
+              <div class="alloc-amount" id="allocNeedsVal">₹2,500</div>
+              <p class="alloc-sub">College canteen meals, bus/metro passes, semester books & xerox.</p>
+            </div>
+
+            <div class="alloc-card alloc-wants">
+              <span class="alloc-label">30% Wants</span>
+              <div class="alloc-amount" id="allocWantsVal">₹1,500</div>
+              <p class="alloc-sub">Weekend outings with friends, movies, coffee, gaming & subscriptions.</p>
+            </div>
+
+            <div class="alloc-card alloc-savings">
+              <span class="alloc-label">20% Savings</span>
+              <div class="alloc-amount" id="allocSavingsVal">₹1,000</div>
+              <p class="alloc-sub">Emergency reserve for unexpected college projects, repairs, or trips.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- 7. SAVINGS GOALS TRACKER WIDGET -->
+        <section class="widget-card" id="goalsSection">
+          <div class="widget-header-row">
+            <div>
+              <h3 class="widget-title">Student Savings Goals</h3>
+              <p class="widget-desc">Set money aside for semester trips, gadgets, or certificates</p>
+            </div>
+            <button class="btn btn-secondary btn-sm" id="btnAddGoal">+ New Goal</button>
+          </div>
+
+          <div class="goals-grid" id="goalsListGrid">
+            <div class="goal-card">
+              <div class="goal-top">
+                <span class="goal-icon">🎒</span>
+                <div>
+                  <h4 class="goal-title">Semester College Trip</h4>
+                  <span class="goal-target">Target: ₹3,000</span>
+                </div>
+              </div>
+              <div class="goal-progress-bar">
+                <div class="goal-fill" style="width: 65%;"></div>
+              </div>
+              <div class="goal-footer">
+                <span>Saved: ₹1,950</span>
+                <span style="color: #059669; font-weight: 600;">65% Completed</span>
+              </div>
+            </div>
+
+            <div class="goal-card">
+              <div class="goal-top">
+                <span class="goal-icon">🎧</span>
+                <div>
+                  <h4 class="goal-title">Wireless ANC Earbuds</h4>
+                  <span class="goal-target">Target: ₹2,200</span>
+                </div>
+              </div>
+              <div class="goal-progress-bar">
+                <div class="goal-fill" style="width: 40%;"></div>
+              </div>
+              <div class="goal-footer">
+                <span>Saved: ₹880</span>
+                <span style="color: #2563eb; font-weight: 600;">40% Completed</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 8. AI STUDENT FINANCIAL COACH -->
+        <section class="widget-card advisor-widget" id="advisorSection">
+          <div class="widget-header-row">
+            <div class="advisor-title-box">
+              <div class="advisor-avatar">🤖</div>
+              <div>
+                <h3 class="widget-title">Expenz AI Financial Health Coach</h3>
+                <p class="widget-desc">Automated health audits and instant financial Q&A</p>
+              </div>
+            </div>
+            <div class="health-score-pill">
+              <span>Financial Health:</span>
+              <strong id="healthScoreNum">94</strong>/100
+            </div>
+          </div>
+
+          <div class="advisor-tips-grid" id="adviceCardsGrid">
+            <div class="tip-card tip-success">
+              <span class="tip-tag">Healthy Pace</span>
+              <h4>Comfortable Budget Margin</h4>
+              <p>Your spending pace is healthy. Keep logging small daily purchases to maintain accurate forecasts.</p>
+            </div>
+            <div class="tip-card tip-neutral">
+              <span class="tip-tag">UPI Micro-Leak Warning</span>
+              <h4>Small Transactions Check</h4>
+              <p>Over 60% of student funds disappear on small ₹20–₹80 canteen snacks. Review recent items regularly.</p>
+            </div>
+          </div>
+
+          <!-- Interactive Q&A Coach -->
+          <div class="chat-thread-container">
+            <div class="chat-bubbles-stack" id="chatThread">
+              <div class="bubble bubble-assistant">
+                <strong>Financial Coach:</strong> Ask me how to save more, reduce mess expenses, or plan your pocket money allocation!
+              </div>
+            </div>
+
+            <div class="quick-chips-row">
+              <button class="quick-chip" data-query="How can I save ₹1,000 this month?">💡 Save ₹1,000 this month</button>
+              <button class="quick-chip" data-query="Explain the 50/30/20 rule for students">📊 50/30/20 Rule</button>
+              <button class="quick-chip" data-query="How to reduce college canteen expenses?">🍔 Canteen Food Tips</button>
+              <button class="quick-chip" data-query="What to do if my budget is exceeded?">🚨 Overspent recovery plan</button>
+            </div>
+
+            <form id="advisorChatForm" class="chat-input-box">
+              <input type="text" id="advisorChatInput" placeholder="Ask your financial question (e.g. How to budget with ₹5,000?)..." autocomplete="off">
+              <button type="submit" class="btn btn-primary btn-sm">Ask Question</button>
+            </form>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- COMMAND PALETTE (CTRL+K) -->
+  <dialog id="commandPaletteModal" class="palette-dialog">
+    <div class="palette-box">
+      <div class="palette-input-wrap">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        <input type="text" id="paletteSearchInput" placeholder="Type a command or search... (e.g. Add Expense, Set Budget, Canteen)" autocomplete="off">
+        <button type="button" class="btn-palette-close" id="closePaletteBtn">&times;</button>
       </div>
 
-      <label>
-        Amount
-        <input id="amount" type="number" min="0.01" step="0.01" placeholder="e.g. 120" required>
-      </label>
-
-      <label>
-        Category
-        <select id="category" required>
-          <option value="">Choose a category</option>
-          <option>Food</option>
-          <option>Transport</option>
-          <option>Education</option>
-          <option>Entertainment</option>
-          <option>Shopping</option>
-          <option>Other</option>
-        </select>
-      </label>
-
-      <label>
-        Note
-        <input id="note" type="text" maxlength="80" placeholder="e.g. Lunch">
-      </label>
-
-      <label>
-        Date
-        <input id="date" type="date" required>
-      </label>
-
-      <button class="primary-btn" type="submit">Save Expense</button>
-    </form>
-  </dialog>
-
-  <dialog id="budgetDialog">
-    <form id="budgetForm" method="dialog" class="dialog-card">
-      <div class="dialog-header">
-        <div>
-          <p class="eyebrow">MONTHLY PLAN</p>
-          <h2>Set pocket-money budget</h2>
+      <div class="palette-results-list" id="paletteResultsList">
+        <div class="palette-item" data-action="add-expense">
+          <span>➕ Add New Expense</span>
+          <span class="palette-hint">Record an expense</span>
         </div>
-        <button type="button" id="closeBudget" class="icon-btn">×</button>
+        <div class="palette-item" data-action="set-budget">
+          <span>💰 Set Monthly Pocket Budget</span>
+          <span class="palette-hint">Update allowance</span>
+        </div>
+        <div class="palette-item" data-action="choice-lab">
+          <span>↔ Compare Campus Choices</span>
+          <span class="palette-hint">See semester costs</span>
+        </div>
+        <div class="palette-item" data-action="bill-split">
+          <span>🧾 Split a Campus Bill</span>
+          <span class="palette-hint">Calculate your share</span>
+        </div>
+        <div class="palette-item" data-action="view-allocator">
+          <span>📊 View 50/30/20 Budget Allocator</span>
+          <span class="palette-hint">Open calculator</span>
+        </div>
+        <div class="palette-item" data-action="view-advisor">
+          <span>🤖 Ask AI Financial Coach</span>
+          <span class="palette-hint">Chat advice</span>
+        </div>
       </div>
-      <label>
-        Monthly budget
-        <input id="budgetInput" type="number" min="1" step="1" placeholder="e.g. 5000" required>
-      </label>
-      <button class="primary-btn" type="submit">Save Budget</button>
-    </form>
+    </div>
   </dialog>
 
+  <!-- MODAL: ADD EXPENSE -->
+  <dialog id="expenseModal" class="modal-dialog">
+    <div class="modal-inner">
+      <div class="modal-head">
+        <h3 class="modal-title">Add Transaction</h3>
+        <button type="button" class="btn-close-modal" id="closeExpenseModalBtn">&times;</button>
+      </div>
+
+      <form id="expenseEntryForm" class="modal-form">
+        <div class="form-group">
+          <label for="expAmount">Amount (₹) *</label>
+          <input type="number" id="expAmount" step="any" min="0.01" placeholder="e.g. 150" required autofocus>
+        </div>
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label for="expCategory">Category *</label>
+            <select id="expCategory" required>
+              <option value="">Select Category</option>
+              <option value="Food">Food & Canteen</option>
+              <option value="Transport">Transport & Commute</option>
+              <option value="Education">Education & Books</option>
+              <option value="Entertainment">Entertainment</option>
+              <option value="Shopping">Shopping & Stationery</option>
+              <option value="Health">Health & Fitness</option>
+              <option value="Utilities">Utilities & Bills</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="expPaymentMethod">Payment Mode</label>
+            <select id="expPaymentMethod">
+              <option value="UPI">UPI</option>
+              <option value="Cash">Cash</option>
+              <option value="Card">Debit / Credit Card</option>
+              <option value="NetBanking">Net Banking</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label for="expDate">Date *</label>
+            <input type="date" id="expDate" required>
+          </div>
+
+          <div class="form-group">
+            <label for="expNote">Merchant / Description</label>
+            <input type="text" id="expNote" maxlength="80" placeholder="e.g. Canteen lunch">
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="cancelExpenseBtn">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Expense</button>
+        </div>
+      </form>
+    </div>
+  </dialog>
+
+  <!-- MODAL: SET BUDGET -->
+  <dialog id="budgetModal" class="modal-dialog">
+    <div class="modal-inner">
+      <div class="modal-head">
+        <h3 class="modal-title">Set Pocket Money Budget</h3>
+        <button type="button" class="btn-close-modal" id="closeBudgetModalBtn">&times;</button>
+      </div>
+
+      <form id="budgetSettingForm" class="modal-form">
+        <p class="modal-help-text">Define your total monthly spending target. The dashboard calculates your daily spending allowance.</p>
+
+        <div class="form-group">
+          <label for="budgetInputVal">Monthly Target Allowance (₹) *</label>
+          <input type="number" id="budgetInputVal" step="100" min="1" placeholder="5000" required>
+        </div>
+
+        <div class="preset-pills-row">
+          <button type="button" class="preset-pill" data-amount="3000">₹3,000</button>
+          <button type="button" class="preset-pill" data-amount="5000">₹5,000</button>
+          <button type="button" class="preset-pill" data-amount="8000">₹8,000</button>
+          <button type="button" class="preset-pill" data-amount="12000">₹12,000</button>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="cancelBudgetBtn">Cancel</button>
+          <button type="submit" class="btn btn-primary">Update Budget</button>
+        </div>
+      </form>
+    </div>
+  </dialog>
+
+  <!-- MODAL: NEW SAVINGS GOAL -->
+  <dialog id="goalModal" class="modal-dialog">
+    <div class="modal-inner">
+      <div class="modal-head">
+        <h3 class="modal-title">Add Savings Goal</h3>
+        <button type="button" class="btn-close-modal" id="closeGoalModalBtn">&times;</button>
+      </div>
+
+      <form id="goalEntryForm" class="modal-form">
+        <div class="form-group">
+          <label for="goalTitleInput">Goal Title *</label>
+          <input type="text" id="goalTitleInput" placeholder="e.g. Semester Trip or Python Course" required>
+        </div>
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label for="goalTargetInput">Target Amount (₹) *</label>
+            <input type="number" id="goalTargetInput" min="100" placeholder="3000" required>
+          </div>
+          <div class="form-group">
+            <label for="goalSavedInput">Saved So Far (₹)</label>
+            <input type="number" id="goalSavedInput" min="0" placeholder="500" value="0">
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="cancelGoalBtn">Cancel</button>
+          <button type="submit" class="btn btn-primary">Create Goal</button>
+        </div>
+      </form>
+    </div>
+  </dialog>
+
+  <!-- MODAL: AUTHENTICATION -->
+  <dialog id="authModal" class="modal-dialog">
+    <div class="modal-inner">
+      <div class="modal-head">
+        <div class="tab-pill-toggle">
+          <button type="button" class="tab-btn active" id="tabLoginBtn">Log In</button>
+          <button type="button" class="tab-btn" id="tabSignupBtn">Sign Up</button>
+        </div>
+        <button type="button" class="btn-close-modal" id="closeAuthModalBtn">&times;</button>
+      </div>
+
+      <!-- Login Form -->
+      <form id="loginForm" class="modal-form">
+        <div class="form-group">
+          <label for="loginEmail">Student Email</label>
+          <input type="email" id="loginEmail" placeholder="student@college.edu" required autocomplete="email">
+        </div>
+
+        <div class="form-group">
+          <label for="loginPassword">Password</label>
+          <input type="password" id="loginPassword" placeholder="••••••••" required autocomplete="current-password">
+        </div>
+
+        <div class="auth-error-box hidden" id="loginFeedback"></div>
+
+        <button type="submit" class="btn btn-primary btn-block">Log In to MongoDB Atlas</button>
+      </form>
+
+      <!-- Signup Form -->
+      <form id="signupForm" class="modal-form hidden">
+        <div class="form-group">
+          <label for="signupName">Full Name</label>
+          <input type="text" id="signupName" placeholder="Arvind Kumar" required autocomplete="name">
+        </div>
+
+        <div class="form-group">
+          <label for="signupEmail">Email Address</label>
+          <input type="email" id="signupEmail" placeholder="arvind@college.edu" required autocomplete="email">
+        </div>
+
+        <div class="form-group">
+          <label for="signupPassword">Password (Min 6 chars)</label>
+          <input type="password" id="signupPassword" minlength="6" placeholder="••••••••" required autocomplete="new-password">
+        </div>
+
+        <div class="form-group">
+          <label for="signupBudget">Monthly Pocket Budget (₹)</label>
+          <input type="number" id="signupBudget" placeholder="5000" value="5000" min="100">
+        </div>
+
+        <div class="auth-error-box hidden" id="signupFeedback"></div>
+
+        <button type="submit" class="btn btn-primary btn-block">Create MongoDB Account</button>
+      </form>
+    </div>
+  </dialog>
+
+  <!-- TOAST NOTIFICATIONS -->
+  <div class="toast-stack" id="toastContainer"></div>
+
+  <!-- APPLICATION CONTROLLER -->
   <script src="app.js"></script>
 </body>
 </html>

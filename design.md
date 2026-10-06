@@ -1,85 +1,36 @@
-# Design Specification — Student Expense Tracker
+# 🎨 Pure White Luxe Design System
 
-## Design Direction
-Clean, friendly, minimal, student-focused, and mobile-first.
+## 1. Aesthetic Philosophy
+The design follows a **Pure White Luxe** approach tailored for students:
+- **Clean & Distraction-Free:** Crisp `#ffffff` card surfaces and neutral slate canvas.
+- **Subtle Elevation:** Multi-layered soft shadows (`0 4px 20px -2px rgba(15, 23, 42, 0.05)`) instead of heavy dark borders.
+- **Micro-Delight & Modern Accents:** Indigo primary actions (`#4f46e5`), glowing pulses for live MongoDB connectivity, and smooth Chart.js data visualizations.
 
-## Layout
-### Desktop
-- Centered application container
-- Maximum width around 1100–1200px
-- Header with app name and navigation
-- Dashboard cards in a responsive grid
-- Two-column layout for summary and category breakdown
-- Full-width recent transaction list
+---
 
-### Mobile
-- Single-column layout
-- Compact header
-- Large primary **Add Expense** button
-- Summary cards stacked vertically
-- Category breakdown below summary
-- Recent transactions below the chart
+## 2. Color Tokens
 
-## Visual Hierarchy
-1. Total spent this month
-2. Remaining budget
-3. Add Expense action
-4. Category breakdown
-5. Recent transactions
+| Token | Hex / Value | Usage |
+|---|---|---|
+| `--bg-body` | `#f8fafc` | Clean neutral slate canvas |
+| `--bg-card` | `#ffffff` | Pure white elevated surfaces |
+| `--border-card` | `#e2e8f0` | Subtle crisp boundaries |
+| `--text-primary` | `#0f172a` | Deep slate high-contrast text |
+| `--text-secondary` | `#475569` | Mid-tone descriptions |
+| `--primary` | `#4f46e5` | Primary Indigo brand actions |
+| `--success` | `#10b981` | Safe budget indicator (< 80%) |
+| `--warning` | `#f59e0b` | Alert indicator (≥ 80%) |
+| `--danger` | `#ef4444` | Exceeded limit indicator (≥ 100%) |
 
-## Components
-- Header
-- SummaryCard
-- BudgetProgress
-- CategoryBreakdown
-- AddExpenseModal/Form
-- TransactionList
-- TransactionRow
-- EmptyState
-- Toast/notification
-- CategoryBadge
+---
 
-## Suggested Style
-- Background: very light neutral
-- Cards: white with subtle border and shadow
-- Primary action: blue or indigo
-- Success: green
-- Warning: amber
-- Error: red
-- Text: dark neutral
-- Border radius: 12–16px
-- Buttons: 10–12px radius
-- Use a modern sans-serif font
+## 3. Typography
+- **Headings:** `Outfit`, sans-serif (Weights: 600, 700, 800)
+- **Body & Controls:** `Plus Jakarta Sans`, sans-serif (Weights: 400, 500, 600, 700)
 
-## Accessibility
-- Minimum readable body text around 16px
-- Strong color contrast
-- Visible keyboard focus
-- Labels for every input
-- Buttons must have clear text or accessible labels
-- Do not rely only on color to communicate warnings
+---
 
-## Responsive Breakpoints
-- Mobile: < 640px
-- Tablet: 640–1024px
-- Desktop: > 1024px
-
-## Dashboard Example
-Header
-↓
-“Good afternoon 👋”
-↓
-[Monthly Budget] [Spent] [Remaining]
-↓
-[Budget Progress]
-↓
-[Where Your Money Went]
-Category breakdown
-↓
-[Recent Expenses]
-Transaction list
-↓
-[+ Add Expense]
-
-## UX Tone
-Friendly and non-judgmental. Avoid language that makes students feel guilty about spending.
+## 4. Accessibility & Responsiveness
+- All interactive controls have distinct `:focus` rings and keyboard accessibility.
+- Contrast ratios exceed WCAG AA standards (high-contrast text against pure white cards).
+- Fully responsive layout adapting from mobile (320px) to ultra-wide desktop monitors (1440px+).
