@@ -6,8 +6,11 @@ let connectionError = null;
 const connectDB = async () => {
   const uri = process.env.MONGODB_URI;
 
-  if (!uri || uri.includes('<username>') || uri.includes('password123')) {
-    console.log('⚠️ [MongoDB Atlas] Note: Using demo connection string or pending real Atlas credentials.');
+  if (!uri) {
+    isConnected = false;
+    connectionError = 'MONGODB_URI is not configured. Records will only be held in memory until the server stops.';
+    console.warn(`⚠️ [Database] ${connectionError}`);
+    return null;
   }
 
   try {
@@ -22,7 +25,7 @@ const connectDB = async () => {
     isConnected = false;
     connectionError = error.message;
     console.warn(`⚠️ [MongoDB Atlas] Connection notice: ${error.message}`);
-    console.log('ℹ️ Server will continue operating with built-in memory fallback for live demo mode.');
+    console.log('ℹ️ Server is running without persistent database storage.');
     return null;
   }
 };

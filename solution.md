@@ -1,27 +1,20 @@
-# 💡 Solution Design & Architecture
+# FinPilot AI solution
 
-## The Problem
-Students often receive monthly pocket money from parents or part-time earnings, but find themselves broke before the month ends. The primary drivers are:
-1. **Friction in Manual Logging:** Existing finance apps are complex, designed for salaried adults with taxes and investments.
-2. **Hidden Micro-Expenses:** Small ₹30–₹100 canteen UPI transactions accumulate invisibly.
-3. **Lack of Instant Feedback:** Students don't know their "safe daily spend limit" for the remaining days of the month.
+FinPilot AI turns a user’s own transaction history into understandable financial context. It combines transaction entry, explainable calculations and scenario planning in one responsive workspace.
 
----
+## Core experience
 
-## The Expenz AI Solution
-Expenz AI delivers a purpose-built student financial tracker that eliminates friction and delivers immediate clarity:
+1. Record real income and expenses by amount, date, category, payment method and note.
+2. Review monthly totals and category distribution on the dashboard.
+3. Use the Financial Health Doctor, spending analysis and Financial Twin to understand recorded activity.
+4. Create personal savings goals, test monthly changes and check purchases against recorded net income.
+5. Treat cash-flow and longer-term projections as estimates, with assumptions and data gaps stated.
 
-1. **AI Natural Language Entry:** Instead of filling multiple form dropdowns, students can type or paste *"Paid 180 for canteen biryani yesterday via UPI"* and log it in 3 seconds.
-2. **Immediate Public Value:** Visitors get instant spending benchmarks, habit tips, and sandbox simulation without mandatory sign-up.
-3. **MongoDB Atlas Multi-Device Cloud Sync:** Real-time persistence linked to MongoDB Atlas Cluster0.
-4. **Dynamic 80% & 100% Budget Guardrails:** Visual color shifting (Green → Amber → Red) with explicit overdraft metrics.
-5. **AI Financial Health Coach:** Real-time 0-100 scoring, safe daily allowance calculations, and smart category suggestions.
+No sample financial records are loaded. The server reports when MongoDB is unavailable and financial records are then temporary until it stops.
 
----
+## Implementation
 
-## Tech Stack
-- **Frontend:** HTML5, CSS3 (Pure White Luxe Design System), Vanilla JS (ES6+), Chart.js
-- **Backend:** Node.js, Express 5.x REST API
-- **Database:** MongoDB Atlas (`Cluster0`) with Mongoose ODM
-- **Authentication:** JSON Web Tokens (JWT) + Bcrypt Password Encryption
-- **Intelligence:** Heuristic NLP Parser + AI Financial Health & Chat Engine
+- Express and MongoDB provide authentication and per-account transaction persistence.
+- Shared deterministic calculations prevent an LLM from inventing financial values.
+- Natural-language parsing is a convenience for entering transactions; the user reviews parsed details before saving.
+- Health, purchase and cash-flow outputs are not credit scores, financial advice or guaranteed outcomes.

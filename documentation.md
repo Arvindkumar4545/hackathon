@@ -1,77 +1,28 @@
-# 📖 Technical & System Documentation
+# FinPilot AI architecture
 
-## 1. System Overview
-**Expenz AI** is an intelligent, student-centric financial management platform developed with a **Pure White Luxe Design System**, Node.js/Express REST backend, **MongoDB Atlas Cloud database**, and built-in **AI Financial Intelligence**.
+FinPilot AI is a personal finance co-pilot that analyzes only transactions and goals entered by the signed-in user. It does not create sample financial records or connect to bank accounts.
 
-The platform is specifically engineered to solve the "disappearing pocket money" problem faced by college students through low-friction tracking, instant natural language parsing, and non-judgmental automated guidance.
+## Application layers
 
----
+- `index.html`, `style.css`, `app.js`: responsive dashboard, transaction workflow and co-pilot interactions.
+- `financial-insights.js`: shared deterministic calculations for income/expense summaries, health score, category changes, repeated merchants, goals, scenarios and purchase checks.
+- `server.js`: Express application and static frontend hosting.
+- `routes/auth.js`: account creation, login and spending-limit management.
+- `routes/expenses.js`: per-account income/expense transaction CRUD and monthly summary statistics.
+- `routes/ai.js`: natural-language transaction parsing and grounded insight/chat endpoints.
+- `models/User.js`, `models/Expense.js`: MongoDB account and transaction schemas.
 
-## 2. Architecture & Data Flow
+## Data and persistence
 
-```mermaid
-graph TD
-    A[Client Browser - Pure White UI] -->|Public Exploration| B[Public Routes /api/public]
-    A -->|Fast Natural Language Logging| C[AI Route /api/ai/parse]
-    A -->|AI Coach Query| D[AI Route /api/ai/chat]
-    A -->|Auth Login / Signup| E[Auth Route /api/auth]
-    A -->|Expense CRUD & Analytics| F[Expenses Route /api/expenses]
-    
-    E -->|JWT Verification| G[Auth Middleware]
-    F -->|Protected Requests| G
-    
-    G -->|Read/Write Operations| H[(MongoDB Atlas - Cluster0)]
-    G -.->|Fallback if Offline| I[(In-Memory Resilient Store)]
-```
+Transactions belong to one authenticated account and are stored in MongoDB when connected. If MongoDB is unavailable, server memory is used temporarily; account and transaction changes are lost when the process stops. User goals and optional check-ins are stored in browser local storage under an account-specific key.
 
----
+## Financial calculation behavior
 
-## 3. Database Schema (MongoDB Atlas)
+- Income and expenses are separate transaction types. Net is recorded income minus recorded expenses.
+- The Financial Health Doctor waits for recorded income across at least two months. Its score is a bounded, savings-rate-based signal, not a credit score.
+- Category changes compare two consecutive calendar months. Repeated merchants are surfaced as items to review, not labeled unused subscriptions.
+- What-if and future projections use recorded trends and constant-rate assumptions. They are estimates, not guarantees.
+- Missing income, transaction history or goal dates produce explicit “not enough data” states; no financial amounts are generated to fill gaps.
+- Natural-language parsing requires an explicit amount and user review before saving.
 
-### User Model (`models/User.js`)
-- `_id`: ObjectId (Primary Key)
-- `name`: String (Required, trimmed)
-- `email`: String (Required, Unique, lowercase)
-- `password`: String (Bcrypt hashed, salted 10 rounds)
-- `monthlyBudget`: Number (Default: 5000 INR)
-- `currency`: String (Default: 'INR')
-- `avatar`: String (Default: '🎓')
-- `createdAt`: Date
-
-### Expense Model (`models/Expense.js`)
-- `_id`: ObjectId (Primary Key)
-- `user`: ObjectId (Reference to `User._id`)
-- `amount`: Number (Min: 0.01)
-- `category`: String (Enum: `Food`, `Transport`, `Education`, `Entertainment`, `Shopping`, `Health`, `Utilities`, `Other`)
-- `note`: String (Max: 100 chars)
-- `date`: String (Format: `YYYY-MM-DD`)
-- `paymentMethod`: String (Enum: `UPI`, `Cash`, `Card`, `NetBanking`, `Other`)
-- `isAiSuggested`: Boolean (Flags AI natural language entries)
-- `createdAt`: Date
-
----
-
-## 4. Key Functional Modules
-
-### A. Public Non-Authenticated Discovery
-- When visitors land on the website, they are not blocked by a login wall.
-- The hero section presents dynamic student spending benchmarks (38% Food, 22% Education, 16% Transport).
-- Visitors can explore live interactive demo sandbox metrics and financial health tips without registering.
-
-### B. AI Engine Capabilities
-1. **Natural Language Expense Parser (`/api/ai/parse`):** Uses regex and heuristic NLP keyword mapping to extract amount, category, date (e.g. yesterday, 2 days ago), payment method, and note with >95% accuracy.
-2. **Financial Health Audit (`/api/ai/insights`):** Calculates an objective score from 0-100 based on month-progress vs spending burn-rate, and provides student-specific saving tips.
-3. **Interactive AI Coach (`/api/ai/chat`):** Provides instant context-aware coaching for college saving hacks, 50/30/20 budget allocations, and canteen cost reduction.
-
-### C. Budget Threshold & Alert Logic
-- **Normal State (< 80%):** Emerald green indicator; displays safe daily spending allowance for remaining days.
-- **Warning State (80% - 99%):** Amber indicator with cautionary banner alerting student of fast burn rate.
-- **Exceeded State (≥ 100%):** Crimson red indicator with explicit overdraft calculation.
-
----
-
-## 5. Security & Best Practices
-- **Password Security:** Salted bcrypt hashing before persistence.
-- **Token Security:** Signed JSON Web Tokens with 30-day expiration.
-- **Input Sanitization:** HTML escaping on all client rendered user notes to prevent XSS.
-- **Error Handling:** Centralized Express error handler preventing server crashes.
+See [API_DOCUMENTATION.md](./API_DOCUMENTATION.md) and [MONGODB_SETUP.md](./MONGODB_SETUP.md) for endpoint and storage details.

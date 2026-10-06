@@ -1,5 +1,7 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const mongoose = require('mongoose');
+const jwtSecret = require('../config/jwt');
 
 const protect = async (req, res, next) => {
   let token;
@@ -21,29 +23,19 @@ const protect = async (req, res, next) => {
   try {
     const decoded = jwt.verify(
       token,
-      process.env.JWT_SECRET || 'super_secret_jwt_key_student_expense_tracker_2026'
+      jwtSecret
     );
 
-    // Support demo/guest memory user
-    if (decoded.id === 'guest_demo_user_id') {
-      req.user = {
-        _id: 'guest_demo_user_id',
-        name: 'Guest Scholar',
-        email: 'guest@student.edu',
-        monthlyBudget: 5000,
-        currency: 'INR',
-      };
-      return next();
-    }
-
-    try {
-      const user = await User.findById(decoded.id);
-      if (user) {
-        req.user = user;
-        return next();
+    if (mongoose.connection.readyState === 1) {
+      try {
+        const user = await User.findById(decoded.id);
+        if (user) {
+          req.user = user;
+          return next();
+        }
+      } catch (error) {
+        if (error.name !== 'CastError') throw error;
       }
-    } catch (e) {
-      // Fallback
     }
 
     // Default decoded payload
@@ -51,7 +43,7 @@ const protect = async (req, res, next) => {
       _id: decoded.id,
       name: decoded.name || 'Student User',
       email: decoded.email || 'user@example.com',
-      monthlyBudget: decoded.monthlyBudget || 5000,
+      monthlyBudget: Number(decoded.monthlyBudget) || 0,
     };
     next();
   } catch (err) {

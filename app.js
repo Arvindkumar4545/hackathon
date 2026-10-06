@@ -1,18 +1,16 @@
-/* ==========================================================================
-   SPENDWISE · MONARCH EDITION CLIENT CONTROLLER
-   Full-stack state sync, Sidebar tabs, Real-time scanner, Scenarios & Atlas
-   ========================================================================== */
+/* FinPilot AI client controller */
 
 const TOKEN_KEY = 'spendwise_token';
 const USER_KEY = 'spendwise_user';
-const GOALS_KEY = 'spendwise_goals';
-const CHOICE_LAB_KEY = 'spendwise_choice_lab';
+const CHOICE_LAB_KEY = 'finpilot_choice_lab';
 
 let currentUser = null;
 let currentToken = null;
 let expensesList = [];
 let categoryChartInstance = null;
+let cashflowChartInstance = null;
 let savingsGoals = [];
+let editingTransactionId = null;
 
 // DOM Elements
 const dbStatusLabel = document.getElementById('dbStatusLabel');
@@ -103,8 +101,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupEventListeners();
   setupRealTimeDetector();
   setupCommandPalette();
-  setupScenarioSwitchers();
-  loadSavedGoals();
+  setupFinancialTools();
   setupCampusChoiceLab();
   setupBillSplitter();
   await checkDatabase();
@@ -122,13 +119,43 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
       currentToken = savedToken;
       currentUser = JSON.parse(savedUser);
-      setAuthState(true);
+      if (currentUser._id === 'guest_demo_user_id' || currentUser.id === 'guest_demo_user_id' || String(currentUser.email || '').endsWith('@demo.app')) {
+        throw new Error('Guest accounts are no longer supported.');
+      }
+      const sessionResponse = await fetch('/api/auth/me', {
+        headers: { Authorization: `Bearer ${currentToken}` },
+      });
+      if (sessionResponse.status === 401) {
+        localStorage.removeItem(TOKEN_KEY);
+        localStorage.removeItem(USER_KEY);
+        currentToken = null;
+        currentUser = null;
+        setAuthState(false);
+        loadSavedGoals();
+        await refreshData();
+        showToast('Your previous session expired. Sign in to access your account.');
+      } else {
+        if (!sessionResponse.ok) {
+          throw new Error(`Unable to validate the saved session (${sessionResponse.status}).`);
+        }
+        setAuthState(true);
+        loadSavedGoals();
+        await refreshData();
+      }
+    } catch (error) {
+      localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(USER_KEY);
+      currentToken = null;
+      currentUser = null;
+      setAuthState(false);
+      loadSavedGoals();
       await refreshData();
-    } catch (e) {
-      startGuestSession();
+      console.error('Saved session could not be restored:', error);
     }
   } else {
-    startGuestSession();
+    setAuthState(false);
+    loadSavedGoals();
+    await refreshData();
   }
 
   const expDateInput = document.getElementById('expDate');
@@ -145,46 +172,31 @@ async function checkDatabase() {
     const res = await fetch('/api/public/status');
     const data = await res.json();
     if (data.success && data.status) {
-      dbStatusLabel.textContent = data.status.connected
-        ? `MongoDB Atlas (${data.status.cluster})`
-        : `MongoDB Cluster0`;
+      dbStatusLabel.textContent = data.status.connected ? 'Persistent account storage' : 'Temporary server storage';
+      document.querySelector('#sidebarDbStatus .pulse-dot').classList.toggle('offline', !data.status.connected);
+      document.getElementById('sidebarDbStatus').title = data.status.connected
+        ? 'Account and transaction records use MongoDB persistence.'
+        : data.status.error || 'Account and transaction records are temporary until the server stops.';
     }
   } catch (err) {
-    dbStatusLabel.textContent = 'MongoDB Atlas Ready';
+    dbStatusLabel.textContent = 'Database status unavailable';
   }
 }
 
 // ==========================================================================
 // AUTH & GUEST
 // ==========================================================================
-async function startGuestSession() {
-  try {
-    const res = await fetch('/api/auth/guest', { method: 'POST' });
-    const data = await res.json();
-    if (data.success) {
-      currentToken = data.token;
-      currentUser = data.user;
-      setAuthState(false);
-      await refreshData();
-    }
-  } catch (e) {
-    currentUser = { _id: 'guest_demo_user_id', name: 'Student Explorer', monthlyBudget: 5000 };
-    setAuthState(false);
-    await refreshData();
-  }
-}
-
 function setAuthState(isLoggedIn) {
   if (isLoggedIn) {
     authBtnRow.classList.add('hidden');
     logoutBtn.classList.remove('hidden');
-    navUserName.textContent = currentUser.name || 'Arvind Kumar';
-    navUserBudget.textContent = `${formatINR(currentUser.monthlyBudget)} / mo`;
+    navUserName.textContent = currentUser.name;
+    navUserBudget.textContent = currentUser.monthlyBudget > 0 ? `${formatINR(currentUser.monthlyBudget)} / mo limit` : 'No spending limit set';
   } else {
     authBtnRow.classList.remove('hidden');
     logoutBtn.classList.add('hidden');
-    navUserName.textContent = 'Guest Explorer';
-    navUserBudget.textContent = `${formatINR((currentUser && currentUser.monthlyBudget) || 5000)} / mo`;
+    navUserName.textContent = 'Sign in to begin';
+    navUserBudget.textContent = 'Your data, your account';
   }
 }
 
@@ -193,8 +205,12 @@ function handleLogout() {
   localStorage.removeItem(USER_KEY);
   currentToken = null;
   currentUser = null;
-  showToast('Logged out. Switched to Guest mode.');
-  startGuestSession();
+  expensesList = [];
+  savingsGoals = [];
+  setAuthState(false);
+  loadSavedGoals();
+  refreshData();
+  showToast('Signed out.');
 }
 
 // ==========================================================================
@@ -210,20 +226,19 @@ function setupRealTimeDetector() {
       pillDetectedCategory.textContent = 'Category: -';
       pillDetectedNote.textContent = 'Note: -';
       if (pillDetectedMode) pillDetectedMode.textContent = 'Mode: UPI';
-      const currentRemaining = ((currentUser && currentUser.monthlyBudget) || 5000) - getCurrentSpent();
-      liveImpactSummary.textContent = `Remaining after: ${formatINR(currentRemaining)}`;
+      liveImpactSummary.textContent = 'Enter a transaction description to preview it.';
       return;
     }
 
     const parsed = clientSideParse(text);
-    pillDetectedAmount.textContent = `₹${parsed.amount}`;
+    pillDetectedAmount.textContent = parsed.amount ? formatINR(parsed.amount) : 'Amount needed';
     pillDetectedCategory.textContent = `Category: ${parsed.category}`;
     pillDetectedNote.textContent = `Note: ${parsed.note}`;
     if (pillDetectedMode) pillDetectedMode.textContent = `Mode: ${parsed.paymentMethod}`;
 
-    const currentRemaining = ((currentUser && currentUser.monthlyBudget) || 5000) - getCurrentSpent();
-    const afterRemaining = currentRemaining - parsed.amount;
-    liveImpactSummary.textContent = `Remaining after: ${formatINR(afterRemaining)} (${afterRemaining >= 0 ? 'Safe' : 'Alert: Overdraft'})`;
+    liveImpactSummary.textContent = parsed.amount
+      ? `Recorded spending after entry: ${formatINR(getCurrentSpent() + parsed.amount)}`
+      : 'Include the actual amount before saving.';
   });
 
   document.querySelectorAll('.scanner-chip').forEach((chip) => {
@@ -238,9 +253,16 @@ function setupRealTimeDetector() {
   liveDetectorForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const text = liveDetectorInput.value.trim();
-    if (!text) return;
+    if (!text || !currentToken) {
+      showToast(currentToken ? 'Enter an actual transaction description.' : 'Sign in before recording a transaction.');
+      return;
+    }
 
     const parsed = clientSideParse(text);
+    if (!parsed.amount) {
+      showToast('Could not find an amount. Include the actual transaction amount.');
+      return;
+    }
 
     try {
       const headers = {
@@ -254,6 +276,7 @@ function setupRealTimeDetector() {
         body: JSON.stringify({
           amount: parsed.amount,
           category: parsed.category,
+          type: parsed.type,
           note: parsed.note,
           date: parsed.date,
           paymentMethod: parsed.paymentMethod,
@@ -269,25 +292,28 @@ function setupRealTimeDetector() {
         pillDetectedCategory.textContent = 'Category: -';
         pillDetectedNote.textContent = 'Note: -';
         await refreshData();
+      } else {
+        showToast(data.message || 'Could not record transaction.');
       }
     } catch (err) {
-      showToast('Failed to record transaction');
+      showToast(err.message || 'Failed to record transaction.');
     }
   });
 }
 
 function clientSideParse(rawText) {
   const text = rawText.toLowerCase();
-  let amount = 100;
+  let amount = null;
 
-  const match = text.match(/(?:(?:rs\.?|inr|₹)\s*(\d+(?:\.\d{1,2})?))|(\d+(?:\.\d{1,2})?)\s*(?:rs|rupees|bucks|inr)?/i);
+  const match = text.match(/(?:(?:rs\.?|inr|₹)\s*([\d,]+(?:\.\d{1,2})?))|([\d,]+(?:\.\d{1,2})?)\s*(?:rs|rupees|bucks|inr)?/i);
   if (match) {
-    const val = parseFloat(match[1] || match[2]);
+    const val = parseFloat((match[1] || match[2]).replaceAll(',', ''));
     if (!isNaN(val) && val > 0) amount = val;
   }
 
   let category = 'Other';
-  if (/canteen|food|lunch|dinner|breakfast|tea|chai|coffee|pizza|burger|snack|biryani|juice|maggi|samosa|momos/i.test(text)) category = 'Food';
+  if (/\bsalary|income|received|earned\b/i.test(text)) category = 'Salary';
+  else if (/canteen|food|lunch|dinner|breakfast|tea|chai|coffee|pizza|burger|snack|biryani|juice|maggi|samosa|momos/i.test(text)) category = 'Food';
   else if (/metro|bus|auto|cab|uber|ola|rapido|ticket|fuel|petrol|rickshaw/i.test(text)) category = 'Transport';
   else if (/book|xerox|print|notes|stationery|pen|notebook|exam|tuition|assignment|course|udemy/i.test(text)) category = 'Education';
   else if (/movie|cinema|netflix|spotify|game|match|party|concert|hotstar|club/i.test(text)) category = 'Entertainment';
@@ -305,6 +331,7 @@ function clientSideParse(rawText) {
   return {
     amount,
     category,
+    type: category === 'Salary' ? 'income' : 'expense',
     note: cleanNote,
     date: new Date().toISOString().slice(0, 10),
     paymentMethod,
@@ -312,96 +339,7 @@ function clientSideParse(rawText) {
 }
 
 function getCurrentSpent() {
-  return expensesList.reduce((sum, item) => sum + Number(item.amount), 0);
-}
-
-// ==========================================================================
-// SCENARIO SWITCHERS (DEMO SYSTEM)
-// ==========================================================================
-function setupScenarioSwitchers() {
-  document.querySelectorAll('.scenario-btn').forEach((btn) => {
-    btn.addEventListener('click', async () => {
-      const scenario = btn.getAttribute('data-scenario');
-      await applyScenario(scenario);
-    });
-  });
-}
-
-async function applyScenario(scenario) {
-  let sampleExpenses = [];
-  let scenarioBudget = 5000;
-
-  if (scenario === 'normal') {
-    scenarioBudget = 5000;
-    sampleExpenses = [
-      { amount: 140, category: 'Food', note: 'Canteen Thali & Chai', date: '2026-10-02', paymentMethod: 'UPI' },
-      { amount: 60, category: 'Transport', note: 'Metro Ticket to College', date: '2026-10-03', paymentMethod: 'UPI' },
-      { amount: 120, category: 'Education', note: 'Semester Xerox & Notes', date: '2026-10-04', paymentMethod: 'Cash' },
-      { amount: 80, category: 'Food', note: 'Evening Snacks with Friends', date: '2026-10-05', paymentMethod: 'UPI' },
-    ];
-    showToast('Loaded: 🍕 Regular College Week');
-  } else if (scenario === 'exam') {
-    scenarioBudget = 5000;
-    sampleExpenses = [
-      { amount: 450, category: 'Education', note: 'Reference Textbook (Algorithms)', date: '2026-10-01', paymentMethod: 'UPI' },
-      { amount: 180, category: 'Education', note: 'Previous Year Question Prints', date: '2026-10-02', paymentMethod: 'UPI' },
-      { amount: 120, category: 'Food', note: 'Late Night Coffee & Energy Drink', date: '2026-10-03', paymentMethod: 'UPI' },
-      { amount: 80, category: 'Education', note: 'Exam Stationery & Pens', date: '2026-10-04', paymentMethod: 'Cash' },
-      { amount: 150, category: 'Food', note: 'Library Snack Run', date: '2026-10-05', paymentMethod: 'UPI' },
-    ];
-    showToast('Loaded: 📚 Exam Prep & Books Scenario');
-  } else if (scenario === 'party') {
-    scenarioBudget = 6000;
-    sampleExpenses = [
-      { amount: 650, category: 'Entertainment', note: 'Weekend Movie & Popcorn', date: '2026-10-01', paymentMethod: 'UPI' },
-      { amount: 850, category: 'Food', note: 'Cafe Pizza Party with Group', date: '2026-10-02', paymentMethod: 'UPI' },
-      { amount: 350, category: 'Transport', note: 'Late Night Cab Share', date: '2026-10-03', paymentMethod: 'UPI' },
-      { amount: 400, category: 'Shopping', note: 'Fest T-Shirt & Badge', date: '2026-10-04', paymentMethod: 'Card' },
-    ];
-    showToast('Loaded: 🎉 Outing & Cafe Trip Scenario');
-  } else if (scenario === 'reset') {
-    scenarioBudget = 5000;
-    sampleExpenses = [];
-    showToast('Data reset to fresh clean state');
-  }
-
-  // Clear current expenses and add scenario expenses
-  if (currentUser) {
-    currentUser.monthlyBudget = scenarioBudget;
-  }
-
-  try {
-    const headers = {
-      'Content-Type': 'application/json',
-      ...(currentToken ? { Authorization: `Bearer ${currentToken}` } : {}),
-    };
-
-    // Update budget
-    await fetch('/api/auth/budget', {
-      method: 'PUT',
-      headers,
-      body: JSON.stringify({ monthlyBudget: scenarioBudget }),
-    });
-
-    // Delete existing
-    for (const exp of expensesList) {
-      await fetch(`/api/expenses/${exp._id || exp.id}`, { method: 'DELETE', headers });
-    }
-
-    // Insert scenario items
-    for (const item of sampleExpenses) {
-      await fetch('/api/expenses', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(item),
-      });
-    }
-
-    await refreshData();
-  } catch (err) {
-    console.error('Scenario error:', err);
-    await refreshData();
-  }
+  return expensesList.reduce((sum, item) => sum + (item.type === 'income' || item.category === 'Salary' ? 0 : Number(item.amount)), 0);
 }
 
 // ==========================================================================
@@ -455,9 +393,9 @@ function openCommandPalette() {
 
 function handlePaletteAction(action) {
   if (action === 'add-expense') {
-    expenseModal.showModal();
+    document.getElementById('openAddExpenseBtn').click();
   } else if (action === 'set-budget') {
-    budgetModal.showModal();
+    document.getElementById('setBudgetBtn').click();
   } else if (action === 'choice-lab') {
     document.getElementById('choiceLabSection').scrollIntoView({ behavior: 'smooth' });
   } else if (action === 'bill-split') {
@@ -475,12 +413,30 @@ function handlePaletteAction(action) {
 // DATA REFRESH & RENDER
 // ==========================================================================
 async function refreshData() {
+  if (!currentToken) {
+    expensesList = [];
+    valTotalSpent.textContent = '—';
+    valSpentCount.textContent = 'Sign in to view recorded activity';
+    valMonthlyBudget.textContent = '—';
+    valRemaining.textContent = '—';
+    valRemainingPercent.textContent = 'Sign in to view your finances';
+    renderTable(expensesList);
+    renderGoals();
+    renderFinancialTools();
+    renderCategoryList([]);
+    renderChart([]);
+    if (healthScoreNum) healthScoreNum.textContent = '—';
+    if (adviceCardsGrid) adviceCardsGrid.innerHTML = '<p class="empty-table-msg">Sign in and record your income and expenses to calculate your financial health.</p>';
+    return;
+  }
   await fetchExpenses();
   await fetchStats();
   renderGoals();
+  renderFinancialTools();
 }
 
 async function fetchExpenses() {
+  if (!currentToken) return;
   try {
     const headers = currentToken ? { Authorization: `Bearer ${currentToken}` } : {};
     const res = await fetch('/api/expenses', { headers });
@@ -495,6 +451,7 @@ async function fetchExpenses() {
 }
 
 async function fetchStats() {
+  if (!currentToken) return;
   try {
     const headers = currentToken ? { Authorization: `Bearer ${currentToken}` } : {};
     const res = await fetch('/api/expenses/stats', { headers });
@@ -504,7 +461,6 @@ async function fetchStats() {
       renderChart(data.stats.categoryBreakdown);
       renderCategoryList(data.stats.categoryBreakdown);
       render503020Allocator(data.stats.monthlyBudget);
-      await fetchAdvisor(data.stats);
     }
   } catch (err) {
     console.error(err);
@@ -512,22 +468,38 @@ async function fetchStats() {
 }
 
 function renderMetrics(stats) {
-  const budget = stats.monthlyBudget || 5000;
+  const budget = Number(stats.totalIncome) || Number(stats.monthlyBudget) || 0;
   const spent = stats.totalSpent || 0;
-  const remaining = stats.remaining;
+  const remaining = stats.totalIncome > 0 ? stats.totalIncome - spent : (stats.monthlyBudget > 0 ? stats.monthlyBudget - spent : null);
   const percent = stats.percentageUsed || 0;
 
-  valMonthlyBudget.textContent = formatINR(budget);
+  document.querySelector('.metric-tile:first-child .tile-label').textContent = stats.totalIncome > 0 ? 'Income This Month' : 'Monthly Spending Limit';
+  document.querySelector('.metric-tile:nth-child(3) .tile-label').textContent = stats.totalIncome > 0 ? 'Net This Month' : 'Remaining vs Limit';
+  valMonthlyBudget.textContent = budget > 0 ? formatINR(budget) : '—';
   valTotalSpent.textContent = formatINR(spent);
-  valSpentCount.textContent = `${stats.transactionCount} expenses logged`;
-  valRemaining.textContent = formatINR(remaining);
-  budgetMaxLabel.textContent = `Limit: ${formatINR(budget)}`;
+  valSpentCount.textContent = `${stats.transactionCount} transactions recorded`;
+  valRemaining.textContent = remaining === null ? '—' : formatINR(remaining);
+  budgetMaxLabel.textContent = stats.totalIncome > 0 ? `Income: ${formatINR(stats.totalIncome)}` : `Limit: ${formatINR(budget)}`;
 
-  valDailyCap.innerHTML = `${formatINR(stats.dailyAverage)}<small>/day</small>`;
+  if (remaining === null) {
+    valRemainingPercent.textContent = 'Record income or set a limit';
+    valRemainingPercent.style.color = '#64748b';
+    budgetPercentageText.textContent = '—';
+    mainProgressBar.style.width = '0%';
+    mainProgressBar.classList.remove('warn', 'danger');
+    budgetStatusPill.className = 'badge';
+    budgetStatusPill.textContent = 'No baseline';
+    runwayText.textContent = 'Record income or set a monthly spending limit to calculate your remaining funds.';
+    valDailyCap.textContent = '—';
+    valDaysRemaining.textContent = 'No spending baseline';
+    return;
+  }
+
+  valDailyCap.innerHTML = spent > 0 ? `${formatINR(stats.dailyAverage)}<small>/day</small>` : '—';
   const now = new Date();
   const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
   const daysLeft = Math.max(1, daysInMonth - now.getDate());
-  valDaysRemaining.textContent = `for next ${daysLeft} days`;
+  valDaysRemaining.textContent = spent > 0 ? `average over ${now.getDate()} days` : 'Record activity to estimate';
 
   budgetPercentageText.textContent = `${Math.round(percent)}%`;
   mainProgressBar.style.width = `${Math.min(percent, 100)}%`;
@@ -535,34 +507,203 @@ function renderMetrics(stats) {
   mainProgressBar.classList.remove('warn', 'danger');
   budgetStatusPill.className = 'badge';
 
-  if (spent >= budget && budget > 0) {
+  if (remaining !== null && remaining < 0) {
     mainProgressBar.classList.add('danger');
     budgetStatusPill.classList.add('badge-danger');
     budgetStatusPill.textContent = 'Limit Exceeded';
     valRemainingPercent.textContent = 'Overspent!';
     valRemainingPercent.style.color = '#dc2626';
-    runwayText.innerHTML = `<strong>⚠️ Alert:</strong> You have reached 100% of your pocket money allowance! Cut non-essential spending immediately.`;
+    runwayText.textContent = `Recorded spending exceeds your ${stats.totalIncome > 0 ? 'recorded income' : 'monthly limit'} by ${formatINR(Math.abs(remaining))}.`;
   } else if (percent >= 80) {
     mainProgressBar.classList.add('warn');
     budgetStatusPill.classList.add('badge-warning');
     budgetStatusPill.textContent = '80% Warning';
     valRemainingPercent.textContent = `${Math.round(100 - percent)}% left`;
     valRemainingPercent.style.color = '#d97706';
-    runwayText.innerHTML = `<strong>⚠️ Caution:</strong> You have spent ${Math.round(percent)}% of your pocket budget. Keep daily spending under ${formatINR(stats.dailyAverage)} to last until month end.`;
+    runwayText.textContent = `You have used ${Math.round(percent)}% of the recorded ${stats.totalIncome > 0 ? 'income' : 'limit'}.`;
   } else {
     budgetStatusPill.classList.add('badge-success');
     budgetStatusPill.textContent = 'Within Safe Limit';
     valRemainingPercent.textContent = `${Math.round(100 - percent)}% available`;
     valRemainingPercent.style.color = '#059669';
-    runwayText.innerHTML = `<strong>🚀 Healthy Runway:</strong> At your current pace, your pocket money is on track to last the entire month comfortably! (${formatINR(stats.dailyAverage)}/day safe cap)`;
+    runwayText.textContent = spent > 0 ? `Recorded average spending: ${formatINR(stats.dailyAverage)}/day. This is an estimate, not a guarantee.` : 'No expenses recorded for this month yet.';
   }
 }
 
+function renderFinancialTools() {
+  const insights = FinancialInsights.generateFinancialInsights(expensesList, currentUser?.monthlyBudget || 0);
+  const health = insights.health;
+  if (healthScoreNum) healthScoreNum.textContent = health.available ? health.score : '—';
+  if (adviceCardsGrid) {
+    adviceCardsGrid.innerHTML = '';
+    if (!health.available) {
+      adviceCardsGrid.innerHTML = `<p class="empty-table-msg">${escapeHtml(health.reason)}</p>`;
+    } else {
+      const cards = [
+        { title: `Risk level: ${health.risk}`, details: `Savings rate across the latest recorded months: ${health.savingsRate.toFixed(1)}%.` },
+        ...health.strengths.map((details) => ({ title: 'Strength', details })),
+        ...health.problems.map((details) => ({ title: 'Needs attention', details })),
+      ];
+      cards.forEach(({ title, details }) => {
+        const card = document.createElement('div');
+        card.className = 'tip-card tip-neutral';
+        card.innerHTML = `<span class="tip-tag">${escapeHtml(title)}</span><p>${escapeHtml(details)}</p>`;
+        adviceCardsGrid.appendChild(card);
+      });
+    }
+  }
+
+  const patternsNode = document.getElementById('spendingPatterns');
+  const patterns = insights.patterns;
+  patternsNode.innerHTML = patterns.length
+    ? patterns.map((pattern) => `<article class="analysis-item"><strong>${escapeHtml(pattern.title)}</strong><p>${escapeHtml(pattern.evidence)}</p></article>`).join('')
+    : '<p class="empty-table-msg">No category increase is supported by consecutive-month records yet.</p>';
+
+  const leaksNode = document.getElementById('moneyLeaks');
+  const recurring = insights.recurring;
+  leaksNode.innerHTML = recurring.length
+    ? recurring.map((item) => `<article class="analysis-item"><strong>${escapeHtml(item.merchant)}</strong><p>Appears in ${item.months} different recorded months; average recorded amount is ${formatINR(item.monthlyAverage)}/month. Consider reviewing whether it is recurring and still useful.</p></article>`).join('')
+    : '<p class="empty-table-msg">No merchant repeats across multiple recorded months yet. A repeated merchant does not necessarily mean a subscription.</p>';
+
+  const cash = insights.cashFlow;
+  document.getElementById('cashFlowResult').textContent = cash.available
+    ? `Estimated remainder: ${formatINR(cash.projectedRemainder)} based on ${cash.basis} and straight-line spending through month-end. Actual bills or income not yet recorded are not included.`
+    : cash.reason;
+
+  const futureNode = document.getElementById('futureResult');
+  const future = FinancialInsights.simulateScenario(expensesList, 0, 12);
+  if (!future.available) {
+    futureNode.textContent = future.reason;
+  } else {
+    const years = [12, 24, 36].map((months) => FinancialInsights.simulateScenario(expensesList, 0, months));
+    const suggested = years.map((scenario, index) => `<div class="projection-row"><span>${index + 1} year${index ? 's' : ''}</span><strong>${formatINR(scenario.currentPath)}</strong><span>estimated net path</span></div>`).join('');
+    futureNode.innerHTML = `<p>Illustrative accumulation from zero using your recent recorded monthly net, held constant; excludes any starting balance, interest and unrecorded activity. Not a guarantee.</p>${suggested}`;
+  }
+
+  renderIncomeExpenseChart();
+  renderChallenges();
+}
+
+function renderIncomeExpenseChart() {
+  const canvas = document.getElementById('incomeExpenseChart');
+  const empty = document.getElementById('incomeExpenseEmpty');
+  if (!canvas || !empty) return;
+  if (cashflowChartInstance) cashflowChartInstance.destroy();
+  const months = [...new Set(expensesList.map((transaction) => String(transaction.date || '').slice(0, 7)).filter(Boolean))].sort().slice(-6);
+  if (!months.length) {
+    canvas.classList.add('hidden');
+    empty.classList.remove('hidden');
+    return;
+  }
+  if (typeof Chart === 'undefined') {
+    canvas.classList.add('hidden');
+    empty.textContent = 'The chart library is unavailable; your recorded totals are still available elsewhere.';
+    empty.classList.remove('hidden');
+    return;
+  }
+  const income = months.map((month) => FinancialInsights.summarize(expensesList, month).income);
+  const expenses = months.map((month) => FinancialInsights.summarize(expensesList, month).expenses);
+  canvas.classList.remove('hidden');
+  empty.classList.add('hidden');
+  cashflowChartInstance = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels: months,
+      datasets: [
+        { label: 'Income recorded', data: income, backgroundColor: '#0f766e', borderRadius: 5 },
+        { label: 'Expenses recorded', data: expenses, backgroundColor: '#2563eb', borderRadius: 5 },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom' } },
+      scales: { y: { beginAtZero: true, ticks: { callback: (value) => `₹${Number(value).toLocaleString('en-IN')}` } } },
+    },
+  });
+}
+
+function challengeStorageKey() {
+  return currentUser ? `finpilot_checkins_${currentUser.id || currentUser._id}` : null;
+}
+
+function renderChallenges() {
+  const node = document.getElementById('challengeList');
+  if (!node) return;
+  const tasks = [
+    'Review this month’s recorded transactions',
+    'Check one recurring merchant in your history',
+    'Update a savings goal contribution',
+    'Compare this month with last month',
+    'Review your monthly spending limit',
+    'Record a missing income or expense',
+    'Check your month-end cash-flow estimate',
+  ];
+  let completed = [];
+  try {
+    const key = challengeStorageKey();
+    const saved = key ? JSON.parse(localStorage.getItem(key) || '[]') : [];
+    completed = Array.isArray(saved) ? saved : [];
+  } catch (error) {
+    completed = [];
+  }
+  node.innerHTML = tasks.map((task, index) => `<label class="challenge-item"><input type="checkbox" data-challenge="${index}" ${completed.includes(index) ? 'checked' : ''}><span>${escapeHtml(task)}</span></label>`).join('');
+  document.getElementById('challengeProgress').textContent = `${completed.length} of ${tasks.length} check-ins completed.`;
+}
+
+function setupFinancialTools() {
+  document.getElementById('twinQueryForm').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const message = document.getElementById('twinQueryInput').value.trim();
+    if (!message) return;
+    const answer = document.getElementById('twinAnswer');
+    answer.textContent = 'Checking your recorded finances…';
+    try {
+      const response = await fetch('/api/ai/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message, context: { transactions: expensesList, goals: savingsGoals, budget: currentUser?.monthlyBudget || 0 } }),
+      });
+      const result = await response.json();
+      answer.textContent = result.success ? result.reply : result.message;
+    } catch (error) {
+      answer.textContent = 'Could not analyze your records. Please try again.';
+    }
+  });
+
+  document.getElementById('whatIfForm').addEventListener('submit', (event) => {
+    event.preventDefault();
+    const amount = Number(document.getElementById('whatIfSaving').value);
+    const mode = document.getElementById('whatIfMode').value;
+    const monthlyChange = mode === 'spend' ? -amount : amount;
+    const result = FinancialInsights.simulateScenario(expensesList, monthlyChange, 12);
+    document.getElementById('whatIfResult').textContent = result.available
+      ? `Estimated net after 12 months: ${formatINR(result.newPath)} versus ${formatINR(result.currentPath)} on your current recorded path. Difference: ${result.difference >= 0 ? '+' : '−'}${formatINR(Math.abs(result.difference))}. Assumes income and expenses stay constant; this is not guaranteed.`
+      : result.reason;
+  });
+
+  document.getElementById('purchaseCheckForm').addEventListener('submit', (event) => {
+    event.preventDefault();
+    const result = FinancialInsights.evaluatePurchase(expensesList, Number(document.getElementById('purchaseAmount').value));
+    const node = document.getElementById('purchaseCheckResult');
+    node.textContent = result.available
+      ? `${result.level}: ${result.explanation} Estimated monthly net after purchase: ${formatINR(result.remainingAfterPurchase)}. This uses recorded income and expenses only.`
+      : result.reason;
+  });
+
+  document.getElementById('challengeList').addEventListener('change', () => {
+    if (!currentUser) return;
+    const checked = [...document.querySelectorAll('[data-challenge]:checked')].map((input) => Number(input.dataset.challenge));
+    localStorage.setItem(challengeStorageKey(), JSON.stringify(checked));
+    renderChallenges();
+  });
+}
+
 function render503020Allocator(budget) {
-  const total = budget || 5000;
-  if (allocNeedsVal) allocNeedsVal.textContent = formatINR(total * 0.5);
-  if (allocWantsVal) allocWantsVal.textContent = formatINR(total * 0.3);
-  if (allocSavingsVal) allocSavingsVal.textContent = formatINR(total * 0.2);
+  const total = Number(budget) || 0;
+  if (allocNeedsVal) allocNeedsVal.textContent = total ? formatINR(total * 0.5) : '—';
+  if (allocWantsVal) allocWantsVal.textContent = total ? formatINR(total * 0.3) : '—';
+  if (allocSavingsVal) allocSavingsVal.textContent = total ? formatINR(total * 0.2) : '—';
 }
 
 function renderChart(categories) {
@@ -571,7 +712,7 @@ function renderChart(categories) {
 
   if (categoryChartInstance) categoryChartInstance.destroy();
 
-  if (!categories || !categories.length) {
+  if (!categories || !categories.length || typeof Chart === 'undefined') {
     ctx.style.display = 'none';
     return;
   }
@@ -653,12 +794,13 @@ function renderTable(list) {
   filtered.forEach((tx) => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td><strong>${escapeHtml(tx.note || tx.category)}</strong></td>
+      <td><strong>${escapeHtml(tx.note || tx.category)}</strong><small class="tx-type">${tx.type === 'income' || tx.category === 'Salary' ? 'Income' : 'Expense'}</small></td>
       <td><span class="cat-badge">${tx.category}</span></td>
       <td style="color: #64748b;">${formatDate(tx.date)}</td>
       <td style="color: #64748b;">${tx.paymentMethod || 'UPI'}</td>
       <td class="text-right" style="font-weight: 700;">${formatINR(tx.amount)}</td>
       <td class="text-center">
+        <button class="btn-edit-row" data-id="${tx._id || tx.id}" title="Edit transaction">Edit</button>
         <button class="btn-del-row" data-id="${tx._id || tx.id}" title="Delete">×</button>
       </td>
     `;
@@ -681,34 +823,52 @@ function renderTable(list) {
       }
     });
   });
+  transactionsTableBody.querySelectorAll('.btn-edit-row').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const transaction = expensesList.find((item) => String(item._id || item.id) === btn.dataset.id);
+      if (!transaction) return;
+      editingTransactionId = btn.dataset.id;
+      document.getElementById('expAmount').value = transaction.amount;
+      document.getElementById('expCategory').value = transaction.category;
+      document.getElementById('expType').value = transaction.type || (transaction.category === 'Salary' ? 'income' : 'expense');
+      document.getElementById('expPaymentMethod').value = transaction.paymentMethod || 'UPI';
+      document.getElementById('expDate').value = transaction.date;
+      document.getElementById('expNote').value = transaction.note || '';
+      document.querySelector('#expenseModal .modal-title').textContent = 'Edit Transaction';
+      document.querySelector('#expenseEntryForm button[type="submit"]').textContent = 'Save Changes';
+      expenseModal.showModal();
+    });
+  });
 }
 
 // ==========================================================================
 // SAVINGS GOALS SYSTEM
 // ==========================================================================
 function loadSavedGoals() {
-  const saved = localStorage.getItem(GOALS_KEY);
+  if (!currentUser) {
+    savingsGoals = [];
+    return;
+  }
+  const saved = localStorage.getItem(goalsStorageKey());
   if (saved) {
     try {
-      savingsGoals = JSON.parse(saved);
+      const parsed = JSON.parse(saved);
+      savingsGoals = Array.isArray(parsed) ? parsed : [];
     } catch (e) {
-      savingsGoals = getDefaultGoals();
+      savingsGoals = [];
     }
   } else {
-    savingsGoals = getDefaultGoals();
+    savingsGoals = [];
   }
 }
 
-function getDefaultGoals() {
-  return [
-    { id: 'g1', title: 'Semester College Trip', icon: '🎒', target: 3000, saved: 1950 },
-    { id: 'g2', title: 'Wireless ANC Earbuds', icon: '🎧', target: 2200, saved: 880 },
-    { id: 'g3', title: 'Python Certification Fund', icon: '💻', target: 1500, saved: 1100 },
-  ];
+function goalsStorageKey() {
+  return `spendwise_goals_${currentUser.id || currentUser._id}`;
 }
 
 function saveGoals() {
-  localStorage.setItem(GOALS_KEY, JSON.stringify(savingsGoals));
+  if (!currentUser) return;
+  localStorage.setItem(goalsStorageKey(), JSON.stringify(savingsGoals));
   renderGoals();
   renderChoiceGoalOptions();
 }
@@ -716,9 +876,15 @@ function saveGoals() {
 function renderGoals() {
   if (!goalsListGrid) return;
   goalsListGrid.innerHTML = '';
+  if (!savingsGoals.length) {
+    goalsListGrid.innerHTML = '<p class="empty-table-msg">No financial goals yet. Add a goal to calculate its progress and plan.</p>';
+    renderChoiceGoalOptions();
+    return;
+  }
 
   savingsGoals.forEach((goal) => {
-    const pct = Math.min(100, Math.round((goal.saved / goal.target) * 100));
+    const plan = FinancialInsights.calculateGoalPlan(goal);
+    const pct = Math.round(plan.progress);
     const card = document.createElement('div');
     card.className = 'goal-card';
     card.innerHTML = `
@@ -728,15 +894,16 @@ function renderGoals() {
           <h4 class="goal-title">${escapeHtml(goal.title)}</h4>
           <span class="goal-target">Target: ${formatINR(goal.target)}</span>
         </div>
-        <button class="btn-goal-add" data-id="${goal.id}" title="Add ₹200 to this goal">+₹200</button>
+        <button class="btn-goal-add" data-id="${goal.id}" title="Record a contribution">Add</button>
       </div>
       <div class="goal-progress-bar">
         <div class="goal-fill" style="width: ${pct}%;"></div>
       </div>
       <div class="goal-footer">
-        <span>Saved: ${formatINR(goal.saved)}</span>
+        <span>Saved: ${formatINR(goal.saved)} · Remaining: ${formatINR(plan.remaining)}</span>
         <span style="color: ${pct >= 100 ? '#059669' : '#2563eb'}; font-weight: 600;">${pct}% Completed</span>
       </div>
+      <p class="goal-plan">${goal.targetDate ? `Target ${formatDate(goal.targetDate)} · ` : ''}${plan.monthlyRequired ? `Plan for ${formatINR(plan.monthlyRequired)}/month` : 'Add a target date to calculate a monthly plan'}</p>
     `;
     goalsListGrid.appendChild(card);
   });
@@ -746,9 +913,11 @@ function renderGoals() {
       const gid = btn.getAttribute('data-id');
       const g = savingsGoals.find((x) => x.id === gid);
       if (g) {
-        g.saved = Math.min(g.target, g.saved + 200);
+        const contribution = Number(window.prompt(`How much did you actually add to ${g.title}?`));
+        if (!Number.isFinite(contribution) || contribution <= 0) return;
+        g.saved = Math.min(g.target, g.saved + contribution);
         saveGoals();
-        showToast(`Added ₹200 to ${g.title}!`);
+        showToast(`Recorded ${formatINR(contribution)} for ${g.title}.`);
       }
     });
   });
@@ -956,39 +1125,6 @@ async function logBillShare() {
 // ==========================================================================
 // ADVISOR & CHAT
 // ==========================================================================
-async function fetchAdvisor(stats) {
-  try {
-    const res = await fetch('/api/ai/insights', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        budget: stats.monthlyBudget,
-        spent: stats.totalSpent,
-        categories: stats.categoryBreakdown,
-        transactions: expensesList,
-      }),
-    });
-
-    const data = await res.json();
-    if (data.success && data.insights) {
-      healthScoreNum.textContent = data.insights.healthScore;
-      adviceCardsGrid.innerHTML = '';
-
-      data.insights.recommendations.slice(0, 2).forEach((rec) => {
-        const card = document.createElement('div');
-        const isSafe = rec.type === 'success' || rec.type === 'tip';
-        card.className = `tip-card ${isSafe ? 'tip-success' : 'tip-neutral'}`;
-        card.innerHTML = `
-          <span class="tip-tag">${escapeHtml(rec.title)}</span>
-          <h4>${escapeHtml(rec.title)}</h4>
-          <p>${escapeHtml(rec.advice)}</p>
-        `;
-        adviceCardsGrid.appendChild(card);
-      });
-    }
-  } catch (e) {}
-}
-
 advisorChatForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const q = advisorChatInput.value.trim();
@@ -1001,7 +1137,7 @@ advisorChatForm.addEventListener('submit', async (e) => {
     const res = await fetch('/api/ai/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: q }),
+      body: JSON.stringify({ message: q, context: { transactions: expensesList, goals: savingsGoals, budget: currentUser?.monthlyBudget || 0 } }),
     });
 
     const data = await res.json();
@@ -1033,10 +1169,16 @@ expenseEntryForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const amount = Number(document.getElementById('expAmount').value);
   const category = document.getElementById('expCategory').value;
+  const type = document.getElementById('expType').value;
   const paymentMethod = document.getElementById('expPaymentMethod').value;
   const date = document.getElementById('expDate').value;
   const note = document.getElementById('expNote').value.trim();
 
+  if (!currentToken) {
+    showToast('Sign in before saving a transaction.');
+    authModal.showModal();
+    return;
+  }
   if (!amount || amount <= 0 || !category) return;
 
   try {
@@ -1045,22 +1187,27 @@ expenseEntryForm.addEventListener('submit', async (e) => {
       ...(currentToken ? { Authorization: `Bearer ${currentToken}` } : {}),
     };
 
-    const res = await fetch('/api/expenses', {
-      method: 'POST',
+    const res = await fetch(editingTransactionId ? `/api/expenses/${editingTransactionId}` : '/api/expenses', {
+      method: editingTransactionId ? 'PUT' : 'POST',
       headers,
-      body: JSON.stringify({ amount, category, paymentMethod, date, note }),
+      body: JSON.stringify({ amount, category, paymentMethod, date, note, type: category === 'Salary' ? 'income' : type }),
     });
 
     const data = await res.json();
     if (data.success) {
-      showToast('Transaction saved');
+      showToast(editingTransactionId ? 'Transaction updated' : 'Transaction saved');
+      editingTransactionId = null;
       expenseEntryForm.reset();
       document.getElementById('expDate').value = new Date().toISOString().slice(0, 10);
+      document.querySelector('#expenseModal .modal-title').textContent = 'Add New Expense';
+      document.querySelector('#expenseEntryForm button[type="submit"]').textContent = 'Save Expense';
       expenseModal.close();
       await refreshData();
+    } else {
+      showToast(data.message || 'Could not save transaction.');
     }
   } catch (err) {
-    showToast('Failed to save');
+    showToast(err.message || 'Failed to save transaction.');
   }
 });
 
@@ -1085,15 +1232,21 @@ budgetSettingForm.addEventListener('submit', async (e) => {
     if (data.success) {
       if (currentUser) {
         currentUser.monthlyBudget = monthlyBudget;
+        if (data.token) {
+          currentToken = data.token;
+          localStorage.setItem(TOKEN_KEY, currentToken);
+        }
         localStorage.setItem(USER_KEY, JSON.stringify(currentUser));
         navUserBudget.textContent = `${formatINR(monthlyBudget)} / mo`;
       }
       showToast('Budget updated');
       budgetModal.close();
       await refreshData();
+    } else {
+      showToast(data.message || 'Could not update the spending limit.');
     }
   } catch (err) {
-    showToast('Failed to update');
+    showToast(err.message || 'Failed to update the spending limit.');
   }
 });
 
@@ -1110,8 +1263,14 @@ if (goalEntryForm) {
     const title = document.getElementById('goalTitleInput').value.trim();
     const target = Number(document.getElementById('goalTargetInput').value);
     const saved = Number(document.getElementById('goalSavedInput').value) || 0;
+    const targetDate = document.getElementById('goalDateInput').value || null;
 
-    if (!title || !target) return;
+    if (!currentToken) {
+      showToast('Sign in before creating a goal.');
+      authModal.showModal();
+      return;
+    }
+    if (!title || !Number.isFinite(target) || target <= 0 || saved < 0) return;
 
     const newGoal = {
       id: 'g_' + Date.now(),
@@ -1119,6 +1278,7 @@ if (goalEntryForm) {
       icon: '🎯',
       target,
       saved,
+      targetDate,
     };
 
     savingsGoals.push(newGoal);
@@ -1151,6 +1311,7 @@ loginForm.addEventListener('submit', async (e) => {
       localStorage.setItem(TOKEN_KEY, currentToken);
       localStorage.setItem(USER_KEY, JSON.stringify(currentUser));
       setAuthState(true);
+      loadSavedGoals();
       authModal.close();
       showToast(`Welcome back, ${currentUser.name}!`);
       await refreshData();
@@ -1169,7 +1330,7 @@ signupForm.addEventListener('submit', async (e) => {
   const name = document.getElementById('signupName').value.trim();
   const email = document.getElementById('signupEmail').value.trim();
   const password = document.getElementById('signupPassword').value;
-  const monthlyBudget = Number(document.getElementById('signupBudget').value) || 5000;
+  const monthlyBudget = Number(document.getElementById('signupBudget').value) || 0;
 
   signupFeedback.classList.add('hidden');
 
@@ -1187,8 +1348,9 @@ signupForm.addEventListener('submit', async (e) => {
       localStorage.setItem(TOKEN_KEY, currentToken);
       localStorage.setItem(USER_KEY, JSON.stringify(currentUser));
       setAuthState(true);
+      loadSavedGoals();
       authModal.close();
-      showToast('Account created in MongoDB Atlas!');
+      showToast(data.message || 'Account created.');
       await refreshData();
     } else {
       signupFeedback.textContent = data.message || 'Signup failed.';
@@ -1214,11 +1376,11 @@ function setupSidebarNavigation() {
         currentViewTitle.textContent = 'Dashboard';
         document.querySelector('.dashboard-scrollable').scrollTo({ top: 0, behavior: 'smooth' });
       } else if (tab === 'tour') {
-        currentViewTitle.textContent = 'How SpendWise Works';
+        currentViewTitle.textContent = 'How FinPilot Works';
         document.getElementById('onboardingTourCard').scrollIntoView({ behavior: 'smooth' });
       } else if (tab === 'transactions') {
         currentViewTitle.textContent = 'Transactions';
-        document.querySelector('.monarch-table').scrollIntoView({ behavior: 'smooth' });
+        document.querySelector('.finpilot-table').scrollIntoView({ behavior: 'smooth' });
       } else if (tab === 'choice-lab') {
         currentViewTitle.textContent = 'Campus Choice Lab';
         document.getElementById('choiceLabSection').scrollIntoView({ behavior: 'smooth' });
@@ -1234,6 +1396,21 @@ function setupSidebarNavigation() {
       } else if (tab === 'advisor') {
         currentViewTitle.textContent = 'AI Financial Coach';
         document.getElementById('advisorSection').scrollIntoView({ behavior: 'smooth' });
+      } else if (tab === 'twin') {
+        currentViewTitle.textContent = 'Financial Twin';
+        document.getElementById('financialTwinSection').scrollIntoView({ behavior: 'smooth' });
+      } else if (tab === 'what-if') {
+        currentViewTitle.textContent = 'What If?';
+        document.getElementById('whatIfSection').scrollIntoView({ behavior: 'smooth' });
+      } else if (tab === 'insights') {
+        currentViewTitle.textContent = 'Spending Detective';
+        document.getElementById('insightsSection').scrollIntoView({ behavior: 'smooth' });
+      } else if (tab === 'future') {
+        currentViewTitle.textContent = 'Financial Future';
+        document.getElementById('futureSection').scrollIntoView({ behavior: 'smooth' });
+      } else if (tab === 'challenges') {
+        currentViewTitle.textContent = 'Money Check-ins';
+        document.getElementById('challengesSection').scrollIntoView({ behavior: 'smooth' });
       }
     });
   });
@@ -1241,6 +1418,15 @@ function setupSidebarNavigation() {
 
 function setupEventListeners() {
   document.getElementById('openAddExpenseBtn').addEventListener('click', () => {
+    if (!currentToken) {
+      switchAuth('login');
+      authModal.showModal();
+      return;
+    }
+    editingTransactionId = null;
+    document.querySelector('#expenseModal .modal-title').textContent = 'Add New Transaction';
+    document.querySelector('#expenseEntryForm button[type="submit"]').textContent = 'Save Transaction';
+    expenseEntryForm.reset();
     document.getElementById('expDate').value = new Date().toISOString().slice(0, 10);
     expenseModal.showModal();
   });
@@ -1249,7 +1435,12 @@ function setupEventListeners() {
   document.getElementById('cancelExpenseBtn').addEventListener('click', () => expenseModal.close());
 
   document.getElementById('setBudgetBtn').addEventListener('click', () => {
-    document.getElementById('budgetInputVal').value = (currentUser && currentUser.monthlyBudget) || 5000;
+    if (!currentToken) {
+      switchAuth('login');
+      authModal.showModal();
+      return;
+    }
+    document.getElementById('budgetInputVal').value = currentUser?.monthlyBudget || '';
     budgetModal.showModal();
   });
 
@@ -1257,7 +1448,14 @@ function setupEventListeners() {
   document.getElementById('cancelBudgetBtn').addEventListener('click', () => budgetModal.close());
 
   if (btnAddGoal) {
-    btnAddGoal.addEventListener('click', () => goalModal.showModal());
+    btnAddGoal.addEventListener('click', () => {
+      if (!currentToken) {
+        switchAuth('login');
+        authModal.showModal();
+        return;
+      }
+      goalModal.showModal();
+    });
   }
   if (closeGoalModalBtn) {
     closeGoalModalBtn.addEventListener('click', () => goalModal.close());

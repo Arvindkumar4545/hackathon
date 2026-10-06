@@ -1,5 +1,5 @@
 /* ==========================================================================
-   SPENDWISE · PURE WHITE ADVANCED DESIGN SYSTEM
+   FINPILOT AI · PERSONAL FINANCE DESIGN SYSTEM
    Modern, Modular, Student Finance Intelligence
    ========================================================================== */
 
@@ -28,7 +28,7 @@ body {
 /* ==========================================================================
    LAYOUT STRUCTURE (SIDEBAR + MAIN CANVAS)
    ========================================================================== */
-.monarch-layout {
+.finpilot-layout {
   display: flex;
   min-height: 100vh;
   background: #ffffff;
@@ -116,10 +116,16 @@ body {
   border-radius: 50%;
 }
 
+.pulse-dot.offline {
+  background: #f59e0b;
+}
+
 .sidebar-nav {
   display: flex;
   flex-direction: column;
   gap: 3px;
+  max-height: calc(100vh - 230px);
+  overflow-y: auto;
 }
 
 .nav-item {
@@ -1072,14 +1078,14 @@ body {
   overflow-x: auto;
 }
 
-.monarch-table {
+.finpilot-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 12px;
   text-align: left;
 }
 
-.monarch-table th {
+.finpilot-table th {
   padding: 8px 10px;
   font-size: 11px;
   font-weight: 600;
@@ -1089,13 +1095,13 @@ body {
   background: #f8fafc;
 }
 
-.monarch-table td {
+.finpilot-table td {
   padding: 10px;
   border-bottom: 1px solid #f1f5f9;
   color: #0f172a;
 }
 
-.monarch-table tr:hover td {
+.finpilot-table tr:hover td {
   background: #f8fafc;
 }
 
@@ -1797,6 +1803,9 @@ input:focus, select:focus {
   .brand-text-group, .sidebar-db-status, .nav-item span, .user-details, .auth-btn-row, .btn-sidebar-logout span {
     display: none;
   }
+  .nav-item.copilot-nav span:first-child {
+    display: inline;
+  }
   .sidebar-top, .sidebar-bottom {
     padding: 14px 8px;
     align-items: center;
@@ -1832,9 +1841,165 @@ input:focus, select:focus {
 }
 
 @media (max-width: 600px) {
-  .monarch-layout {
+  .finpilot-layout {
     flex-direction: column;
   }
+}
+
+.copilot-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+.copilot-card {
+    min-width: 0;
+  }
+
+.feature-kicker {
+    display: inline-block;
+    color: #2563eb;
+    font-size: 10px;
+    font-weight: 750;
+    letter-spacing: .1em;
+    margin-bottom: 5px;
+  }
+
+.tool-form {
+    display: flex;
+    align-items: end;
+    flex-wrap: wrap;
+    gap: 9px;
+    margin: 14px 0;
+  }
+
+.tool-form label {
+    color: #475569;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+.tool-form input {
+    flex: 1 1 180px;
+    min-width: 0;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 10px 12px;
+    font: inherit;
+  }
+
+  .tool-form select {
+    min-width: 130px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #ffffff;
+    padding: 10px 12px;
+    font: inherit;
+  }
+
+.analysis-result {
+    padding: 13px;
+    border-radius: 9px;
+    background: #f8fafc;
+    color: #334155;
+    line-height: 1.65;
+    font-size: 13px;
+    overflow-wrap: anywhere;
+  }
+
+.analysis-list {
+    display: grid;
+    gap: 9px;
+  }
+
+.analysis-item {
+    border-left: 3px solid #93c5fd;
+    background: #f8fafc;
+    border-radius: 0 8px 8px 0;
+    padding: 11px 13px;
+    color: #334155;
+    font-size: 13px;
+  }
+
+.analysis-item p {
+    margin-top: 4px;
+    color: #64748b;
+    line-height: 1.55;
+  }
+
+.analysis-subheading {
+    margin: 18px 0 9px;
+    font-size: 13px;
+  }
+
+.projection-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 0;
+    border-top: 1px solid #e2e8f0;
+  }
+
+.projection-row strong {
+    color: #0f766e;
+  }
+
+.projection-row span:last-child {
+    color: #64748b;
+    font-size: 11px;
+  }
+
+.challenge-list {
+    display: grid;
+    gap: 8px;
+    margin: 12px 0;
+  }
+
+.challenge-item {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 9px 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    color: #334155;
+    font-size: 13px;
+  }
+
+.challenge-progress,
+.goal-plan,
+.tx-type {
+    color: #64748b;
+    font-size: 11px;
+  }
+
+.tx-type {
+    display: block;
+  }
+
+.btn-edit-row,
+.btn-del-row {
+    border: 0;
+    background: transparent;
+    color: #2563eb;
+    cursor: pointer;
+    font: inherit;
+    font-size: 12px;
+    margin: 0 3px;
+  }
+
+.btn-del-row {
+    color: #dc2626;
+    font-size: 18px;
+  }
+
+  @media (max-width: 900px) {
+    .copilot-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+@media (max-width: 600px) {
   .sidebar {
     width: 100%;
     height: auto;

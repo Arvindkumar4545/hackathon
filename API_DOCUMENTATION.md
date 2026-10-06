@@ -1,161 +1,97 @@
-# 📡 REST API Documentation
+# FinPilot AI API
 
 Base URL: `http://localhost:5000/api`
 
----
+Financial endpoints use user-entered records only. There are no seeded accounts, transactions or public benchmark figures.
 
-## 1. Public Endpoints (No Authentication Required)
+## Status
 
-### `GET /api/public/overview`
-Retrieves public student spending benchmarks, habit tips, and feature highlights for landing page visitors without login.
+### `GET /public/status`
 
-**Response:**
+Returns MongoDB connection state and whether account records are persistent.
+
+### `GET /public/overview`
+
+Returns the product name and storage status. It contains no personal or example financial metrics.
+
+## Authentication
+
+### `POST /auth/signup`
+
+Request:
+
 ```json
 {
-  "success": true,
-  "platform": "Expenz AI - Student Smart Expense Tracker",
-  "databaseStatus": {
-    "connected": true,
-    "cluster": "Cluster0",
-    "engine": "MongoDB Atlas Cloud"
-  },
-  "publicBenchmarks": {
-    "avgMonthlyPocketMoney": 6000,
-    "avgMonthlySpent": 4350,
-    "avgSavingsRate": "27.5%",
-    "topSpendingCategories": [
-      { "category": "Food & Canteen", "percentage": 38, "avgAmount": 1650, "icon": "🍔" },
-      { "category": "Education & Books", "percentage": 22, "avgAmount": 950, "icon": "📚" }
-    ],
-    "studentHabitsInsight": [
-      "Students who track daily expenses save 2.4x more pocket money each month."
-    ]
-  }
+  "name": "Your name",
+  "email": "you@example.com",
+  "password": "choose-a-password",
+  "monthlyBudget": 0
 }
 ```
 
-### `GET /api/public/status`
-Checks MongoDB Atlas connectivity and cluster name.
+`monthlyBudget` is optional. The response includes a JWT and account profile.
 
----
+### `POST /auth/login`
 
-## 2. Authentication Endpoints
+Accepts `email` and `password`; returns a JWT and profile.
 
-### `POST /api/auth/signup`
-Registers a new student account and returns a JWT token.
+### `PUT /auth/budget`
 
-**Request Body:**
+Requires `Authorization: Bearer <token>`. Updates the optional monthly spending limit and returns a refreshed JWT.
+
+## Transactions
+
+All transaction endpoints require authentication.
+
+### `GET /expenses`
+
+Returns the signed-in account’s transactions. Optional filters: `month=YYYY-MM`, `category`, and `search`.
+
+### `POST /expenses`
+
+Creates an income or expense transaction.
+
 ```json
 {
-  "name": "Rahul Verma",
-  "email": "rahul@college.edu",
-  "password": "password123",
-  "monthlyBudget": 6000
-}
-```
-
-**Response (201 Created):**
-```json
-{
-  "success": true,
-  "message": "Student account registered successfully in MongoDB Atlas!",
-  "token": "eyJhbGciOi...",
-  "user": {
-    "id": "651f...",
-    "name": "Rahul Verma",
-    "email": "rahul@college.edu",
-    "monthlyBudget": 6000,
-    "currency": "INR"
-  }
-}
-```
-
-### `POST /api/auth/login`
-Authenticates an existing student.
-
-**Request Body:**
-```json
-{
-  "email": "rahul@college.edu",
-  "password": "password123"
-}
-```
-
-### `POST /api/auth/guest`
-Instant one-click demo session with sample transactions without requiring email/password.
-
-### `PUT /api/auth/budget` (Private, Requires `Bearer <token>`)
-Updates the student's monthly budget limit.
-
-**Request Body:**
-```json
-{
-  "monthlyBudget": 7500
-}
-```
-
----
-
-## 3. Expense Management Endpoints (Requires `Bearer <token>`)
-
-### `GET /api/expenses`
-Retrieves expenses for the logged-in student. Supports optional query parameters:
-- `?month=YYYY-MM` (e.g. `?month=2026-10`)
-- `?category=Food`
-- `?search=canteen`
-
-### `POST /api/expenses`
-Creates a new expense transaction.
-
-**Request Body:**
-```json
-{
-  "amount": 180,
-  "category": "Food",
-  "note": "College canteen lunch & tea",
+  "amount": 1250,
+  "category": "Salary",
+  "type": "income",
+  "note": "Monthly salary",
   "date": "2026-10-06",
-  "paymentMethod": "UPI",
-  "isAiSuggested": false
+  "paymentMethod": "UPI"
 }
 ```
 
-### `DELETE /api/expenses/:id`
-Deletes a specific expense transaction by ID.
+Supported categories: Food, Transport, Education, Entertainment, Shopping, Health, Utilities, Rent, Bills, Salary and Other. Supported payment methods: UPI, Cash, Card, NetBanking and Other.
 
-### `GET /api/expenses/stats`
-Computes monthly summary analytics: total spent, remaining balance, percentage used, daily average, projected month-end total, and category breakdown.
+### `PUT /expenses/:id`
 
----
+Updates one transaction owned by the signed-in account.
 
-## 4. AI Engine Endpoints
+### `DELETE /expenses/:id`
 
-### `POST /api/ai/parse`
-Parses natural language casual text into a structured transaction JSON.
+Deletes one transaction owned by the signed-in account.
 
-**Request Body:**
-```json
-{
-  "text": "Spent 350 on Dominos pizza with friends yesterday via UPI"
-}
-```
+### `GET /expenses/stats`
 
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "amount": 350,
-    "category": "Food",
-    "note": "Dominos pizza with friends",
-    "date": "2026-10-05",
-    "paymentMethod": "UPI",
-    "confidence": 0.95
-  }
-}
-```
+Returns this month’s recorded income, expenses, net, budget use and expense-category breakdown.
 
-### `POST /api/ai/insights`
-Calculates Financial Health Score (0-100), safe daily spending allowance, and custom recommendations.
+## Financial analysis
 
-### `POST /api/ai/chat`
-Interactive student financial coach for budgeting advice, 50/30/20 pocket money rules, and canteen savings tips.
+### `POST /ai/parse`
+
+Parses text containing an explicit amount and description. It returns `400` when an amount is missing rather than inventing one.
+
+### `POST /ai/insights`
+
+Accepts `transactions` and optional `budget`, and returns deterministic health, category-pattern, repeated-merchant and cash-flow calculations. Repeated merchants are review prompts, not claims of unused subscriptions.
+
+### `POST /ai/chat`
+
+Accepts a question and a `context` object containing the caller’s transactions, goals and optional budget. Replies are calculation- and rule-based; unavailable data is called out rather than guessed.
+
+Longer-term projections and purchase checks are exposed in the web interface and are explicitly estimates, not guarantees or financial advice.
+
+## Persistence note
+
+Set `MONGODB_URI` to enable persistent accounts and transactions. If MongoDB is unavailable, the server reports that data is temporary and retains in-memory account/transaction state only until it stops.

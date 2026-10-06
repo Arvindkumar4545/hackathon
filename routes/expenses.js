@@ -4,64 +4,14 @@ const mongoose = require('mongoose');
 const Expense = require('../models/Expense');
 const { protect } = require('../middleware/auth');
 
-// In-memory fallback expenses storage
-let memoryExpenses = [
-  {
-    _id: 'exp_1',
-    user: 'guest_demo_user_id',
-    amount: 180,
-    category: 'Food',
-    note: 'College Canteen Lunch & Chai',
-    date: new Date().toISOString().slice(0, 10),
-    paymentMethod: 'UPI',
-    isAiSuggested: false,
-    createdAt: new Date(),
-  },
-  {
-    _id: 'exp_2',
-    user: 'guest_demo_user_id',
-    amount: 350,
-    category: 'Education',
-    note: 'Python & Data Structures Handbook',
-    date: new Date(Date.now() - 86400000).toISOString().slice(0, 10),
-    paymentMethod: 'UPI',
-    isAiSuggested: false,
-    createdAt: new Date(),
-  },
-  {
-    _id: 'exp_3',
-    user: 'guest_demo_user_id',
-    amount: 80,
-    category: 'Transport',
-    note: 'Metro Recharge',
-    date: new Date(Date.now() - 172800000).toISOString().slice(0, 10),
-    paymentMethod: 'UPI',
-    isAiSuggested: false,
-    createdAt: new Date(),
-  },
-  {
-    _id: 'exp_4',
-    user: 'guest_demo_user_id',
-    amount: 299,
-    category: 'Entertainment',
-    note: 'Spotify Student Subscription',
-    date: new Date(Date.now() - 259200000).toISOString().slice(0, 10),
-    paymentMethod: 'Card',
-    isAiSuggested: true,
-    createdAt: new Date(),
-  },
-  {
-    _id: 'exp_5',
-    user: 'guest_demo_user_id',
-    amount: 540,
-    category: 'Shopping',
-    note: 'Backpack Stationery & Notebooks',
-    date: new Date(Date.now() - 345600000).toISOString().slice(0, 10),
-    paymentMethod: 'UPI',
-    isAiSuggested: false,
-    createdAt: new Date(),
-  },
-];
+const memoryExpenses = [];
+const categories = ['Food', 'Transport', 'Education', 'Entertainment', 'Shopping', 'Health', 'Utilities', 'Rent', 'Bills', 'Salary', 'Other'];
+const paymentMethods = ['UPI', 'Cash', 'Card', 'NetBanking', 'Other'];
+const isValidDate = (value) => {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const parsed = new Date(`${value}T00:00:00.000Z`);
+  return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
+};
 
 // @route   GET /api/expenses
 // @desc    Get all expenses for the logged-in student
@@ -71,7 +21,7 @@ router.get('/', protect, async (req, res) => {
     const { month, category, search } = req.query;
     const userId = req.user._id.toString();
 
-    if (mongoose.connection.readyState === 1 && userId !== 'guest_demo_user_id') {
+    if (mongoose.connection.readyState === 1) {
       let query = { user: req.user._id };
 
       if (month) {
@@ -92,7 +42,7 @@ router.get('/', protect, async (req, res) => {
       });
     } else {
       // Memory Store Query
-      let results = memoryExpenses.filter((e) => e.user === userId || userId === 'guest_demo_user_id');
+      let results = memoryExpenses.filter((e) => e.user === userId);
 
       if (month) {
         results = results.filter((e) => e.date.startsWith(month));
@@ -128,30 +78,33 @@ router.get('/', protect, async (req, res) => {
 // @access  Private
 router.post('/', protect, async (req, res) => {
   try {
-    const { amount, category, note, date, paymentMethod, isAiSuggested } = req.body;
+    const { amount, category, note, date, paymentMethod, isAiSuggested, type = 'expense' } = req.body;
 
-    if (!amount || Number(amount) <= 0) {
+    if (!Number.isFinite(Number(amount)) || Number(amount) <= 0) {
       return res.status(400).json({
         success: false,
         message: 'Please provide a valid expense amount greater than 0.',
       });
     }
 
-    if (!category) {
+    if (!categories.includes(category) || !['income', 'expense'].includes(type)
+      || (date && !isValidDate(date)) || (paymentMethod && !paymentMethods.includes(paymentMethod))
+      || (note && (typeof note !== 'string' || note.length > 100))) {
       return res.status(400).json({
         success: false,
-        message: 'Please select an expense category.',
+        message: 'Provide a valid transaction category, type, date, payment method and note.',
       });
     }
 
     const expenseDate = date || new Date().toISOString().slice(0, 10);
     const userId = req.user._id.toString();
 
-    if (mongoose.connection.readyState === 1 && userId !== 'guest_demo_user_id') {
+    if (mongoose.connection.readyState === 1) {
       const expense = await Expense.create({
         user: req.user._id,
         amount: Number(amount),
         category,
+        type: category === 'Salary' ? 'income' : type,
         note: note ? note.trim() : category,
         date: expenseDate,
         paymentMethod: paymentMethod || 'UPI',
@@ -170,6 +123,7 @@ router.post('/', protect, async (req, res) => {
         user: userId,
         amount: Number(amount),
         category,
+        type: category === 'Salary' ? 'income' : type,
         note: note ? note.trim() : category,
         date: expenseDate,
         paymentMethod: paymentMethod || 'UPI',
@@ -180,7 +134,7 @@ router.post('/', protect, async (req, res) => {
 
       return res.status(201).json({
         success: true,
-        message: 'Expense saved successfully (Demo/Session Mode)!',
+        message: 'Transaction recorded for this server session. Configure MongoDB to keep it across restarts.',
         data: newExpense,
       });
     }
@@ -192,6 +146,42 @@ router.post('/', protect, async (req, res) => {
   }
 });
 
+router.put('/:id', protect, async (req, res) => {
+  try {
+    const { amount, category, note, date, paymentMethod, type = 'expense' } = req.body;
+    const numericAmount = Number(amount);
+    if (!Number.isFinite(numericAmount) || numericAmount <= 0 || !categories.includes(category) || !['income', 'expense'].includes(type)
+      || (date && !isValidDate(date)) || (paymentMethod && !paymentMethods.includes(paymentMethod))
+      || (note && (typeof note !== 'string' || note.length > 100))) {
+      return res.status(400).json({ success: false, message: 'Provide a valid amount, category and transaction type.' });
+    }
+    const userId = req.user._id.toString();
+    const updates = {
+      amount: numericAmount,
+      category,
+      type: category === 'Salary' ? 'income' : type,
+      note: note ? String(note).trim() : category,
+      date: date || new Date().toISOString().slice(0, 10),
+      paymentMethod: paymentMethod || 'UPI',
+    };
+    if (mongoose.connection.readyState === 1) {
+      const transaction = await Expense.findOneAndUpdate(
+        { _id: req.params.id, user: req.user._id },
+        updates,
+        { new: true, runValidators: true }
+      );
+      if (!transaction) return res.status(404).json({ success: false, message: 'Transaction not found for this account.' });
+      return res.json({ success: true, message: 'Transaction updated.', data: transaction });
+    }
+    const transaction = memoryExpenses.find((item) => item._id === req.params.id && item.user === userId);
+    if (!transaction) return res.status(404).json({ success: false, message: 'Transaction not found for this account.' });
+    Object.assign(transaction, updates);
+    return res.json({ success: true, message: 'Transaction updated for this server session.', data: transaction });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to update transaction: ' + error.message });
+  }
+});
+
 // @route   DELETE /api/expenses/:id
 // @desc    Delete an expense
 // @access  Private
@@ -200,38 +190,27 @@ router.delete('/:id', protect, async (req, res) => {
     const expenseId = req.params.id;
     const userId = req.user._id.toString();
 
-    if (mongoose.connection.readyState === 1 && userId !== 'guest_demo_user_id') {
-      const expense = await Expense.findById(expenseId);
+    if (mongoose.connection.readyState === 1) {
+      const expense = await Expense.findOneAndDelete({ _id: expenseId, user: req.user._id });
       if (!expense) {
         return res.status(404).json({
           success: false,
-          message: 'Expense transaction not found.',
+          message: 'Transaction not found for this account.',
         });
       }
-
-      if (expense.user.toString() !== req.user._id.toString()) {
-        return res.status(403).json({
-          success: false,
-          message: 'Not authorized to delete this expense.',
-        });
-      }
-
-      await expense.deleteOne();
       return res.json({
         success: true,
-        message: 'Expense deleted successfully from MongoDB Atlas.',
+        message: 'Transaction deleted.',
       });
     } else {
-      const initialLength = memoryExpenses.length;
-      memoryExpenses = memoryExpenses.filter((e) => e._id !== expenseId);
-
-      if (memoryExpenses.length === initialLength) {
+      const index = memoryExpenses.findIndex((e) => e._id === expenseId && e.user === userId);
+      if (index === -1) {
         return res.status(404).json({
           success: false,
-          message: 'Expense transaction not found.',
+          message: 'Transaction not found for this account.',
         });
       }
-
+      memoryExpenses.splice(index, 1);
       return res.json({
         success: true,
         message: 'Expense deleted successfully.',
@@ -254,30 +233,31 @@ router.get('/stats', protect, async (req, res) => {
     const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
     const selectedMonth = req.query.month || currentMonth;
     const userId = req.user._id.toString();
-    const monthlyBudget = Number(req.user.monthlyBudget) || 5000;
+    const monthlyBudget = Number(req.user.monthlyBudget) || 0;
 
     let expenses = [];
-    if (mongoose.connection.readyState === 1 && userId !== 'guest_demo_user_id') {
+    if (mongoose.connection.readyState === 1) {
       expenses = await Expense.find({
         user: req.user._id,
         date: { $regex: `^${selectedMonth}` },
       });
     } else {
-      expenses = memoryExpenses.filter(
-        (e) => (e.user === userId || userId === 'guest_demo_user_id') && e.date.startsWith(selectedMonth)
-      );
+      expenses = memoryExpenses.filter((e) => e.user === userId && e.date.startsWith(selectedMonth));
     }
 
-    const totalSpent = expenses.reduce((sum, item) => sum + Number(item.amount), 0);
-    const remaining = monthlyBudget - totalSpent;
-    const percentageUsed = monthlyBudget > 0 ? (totalSpent / monthlyBudget) * 100 : 0;
+    const totalSpent = expenses.filter((item) => item.type !== 'income').reduce((sum, item) => sum + Number(item.amount), 0);
+    const totalIncome = expenses.filter((item) => item.type === 'income' || item.category === 'Salary').reduce((sum, item) => sum + Number(item.amount), 0);
+    const availableFunds = totalIncome || monthlyBudget;
+    const remaining = availableFunds - totalSpent;
+    const percentageUsed = availableFunds > 0 ? (totalSpent / availableFunds) * 100 : 0;
 
     // Category Aggregations
-    const categories = ['Food', 'Transport', 'Education', 'Entertainment', 'Shopping', 'Health', 'Utilities', 'Other'];
+    const categories = ['Food', 'Transport', 'Education', 'Entertainment', 'Shopping', 'Health', 'Utilities', 'Rent', 'Bills', 'Other'];
     const categoryTotals = {};
     categories.forEach((cat) => (categoryTotals[cat] = 0));
 
     expenses.forEach((item) => {
+      if (item.type === 'income' || item.category === 'Salary') return;
       const cat = item.category || 'Other';
       categoryTotals[cat] = (categoryTotals[cat] || 0) + Number(item.amount);
     });
@@ -300,10 +280,10 @@ router.get('/stats', protect, async (req, res) => {
     // Status warning
     let statusText = 'Normal';
     let statusMessage = 'Spending within comfortable limits.';
-    if (totalSpent >= monthlyBudget) {
+    if (availableFunds > 0 && totalSpent >= availableFunds) {
       statusText = 'Exceeded';
-      statusMessage = `Warning! Budget exceeded by ₹${(totalSpent - monthlyBudget).toLocaleString('en-IN')}`;
-    } else if (percentageUsed >= 80) {
+      statusMessage = `Recorded spending exceeded the available monthly funds by ₹${(totalSpent - availableFunds).toLocaleString('en-IN')}`;
+    } else if (availableFunds > 0 && percentageUsed >= 80) {
       statusText = 'Alert';
       statusMessage = `Alert: You have reached ${Math.round(percentageUsed)}% of your monthly pocket money limit.`;
     }
@@ -313,6 +293,7 @@ router.get('/stats', protect, async (req, res) => {
       stats: {
         month: selectedMonth,
         monthlyBudget,
+        totalIncome,
         totalSpent,
         remaining,
         percentageUsed: Number(percentageUsed.toFixed(1)),

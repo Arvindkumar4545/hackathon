@@ -22,9 +22,18 @@ const ExpenseSchema = new mongoose.Schema({
       'Shopping',
       'Health',
       'Utilities',
+      'Rent',
+      'Bills',
+      'Salary',
       'Other',
     ],
     default: 'Other',
+  },
+  type: {
+    type: String,
+    enum: ['income', 'expense'],
+    default: 'expense',
+    required: true,
   },
   note: {
     type: String,

@@ -3,6 +3,7 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const mongoose = require('mongoose');
+const jwtSecret = require('../config/jwt');
 const User = require('../models/User');
 const { protect } = require('../middleware/auth');
 
@@ -17,7 +18,7 @@ const generateToken = (user) => {
       email: user.email,
       monthlyBudget: user.monthlyBudget,
     },
-    process.env.JWT_SECRET || 'super_secret_jwt_key_student_expense_tracker_2026',
+    jwtSecret,
     { expiresIn: '30d' }
   );
 };
@@ -57,14 +58,14 @@ router.post('/signup', async (req, res) => {
         name,
         email: email.toLowerCase(),
         password,
-        monthlyBudget: monthlyBudget ? Number(monthlyBudget) : 5000,
+        monthlyBudget: monthlyBudget ? Number(monthlyBudget) : 0,
       });
 
       const token = generateToken(user);
 
       return res.status(201).json({
         success: true,
-        message: 'Student account registered successfully in MongoDB Atlas!',
+        message: 'Account created.',
         token,
         user: {
           id: user._id,
@@ -92,7 +93,7 @@ router.post('/signup', async (req, res) => {
         name,
         email: email.toLowerCase(),
         password: hashedPassword,
-        monthlyBudget: monthlyBudget ? Number(monthlyBudget) : 5000,
+        monthlyBudget: monthlyBudget ? Number(monthlyBudget) : 0,
         currency: 'INR',
       };
       memoryUsers.push(newUser);
@@ -101,7 +102,7 @@ router.post('/signup', async (req, res) => {
 
       return res.status(201).json({
         success: true,
-        message: 'Account created successfully (Memory/Demo Mode).',
+        message: 'Account created for this server session. Configure MongoDB to keep account data across restarts.',
         token,
         user: {
           id: newUser._id,
@@ -156,7 +157,7 @@ router.post('/login', async (req, res) => {
 
       return res.json({
         success: true,
-        message: 'Logged in successfully via MongoDB Atlas!',
+        message: 'Logged in successfully.',
         token,
         user: {
           id: user._id,
@@ -207,28 +208,6 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// @route   POST /api/auth/guest
-// @desc    One-click instant guest login with sample student expenses
-// @access  Public
-router.post('/guest', (req, res) => {
-  const guestUser = {
-    _id: 'guest_demo_user_id',
-    name: 'Alex Rivera (Guest Demo)',
-    email: 'guest.student@demo.app',
-    monthlyBudget: 6000,
-    currency: 'INR',
-  };
-
-  const token = generateToken(guestUser);
-
-  res.json({
-    success: true,
-    message: 'Welcome to Guest Explorer Mode!',
-    token,
-    user: guestUser,
-  });
-});
-
 // @route   GET /api/auth/me
 // @desc    Get current authenticated user
 // @access  Private
@@ -252,7 +231,7 @@ router.put('/budget', protect, async (req, res) => {
       });
     }
 
-    if (mongoose.connection.readyState === 1 && req.user._id !== 'guest_demo_user_id') {
+    if (mongoose.connection.readyState === 1) {
       const user = await User.findByIdAndUpdate(
         req.user._id,
         { monthlyBudget: Number(monthlyBudget) },
@@ -262,13 +241,17 @@ router.put('/budget', protect, async (req, res) => {
         success: true,
         message: 'Monthly budget updated successfully in database.',
         monthlyBudget: user.monthlyBudget,
+        token: generateToken(user),
       });
     } else {
       req.user.monthlyBudget = Number(monthlyBudget);
+      const user = memoryUsers.find((entry) => entry._id === req.user._id);
+      if (user) user.monthlyBudget = req.user.monthlyBudget;
       return res.json({
         success: true,
         message: 'Monthly budget updated successfully.',
         monthlyBudget: req.user.monthlyBudget,
+        token: generateToken(req.user),
       });
     }
   } catch (error) {

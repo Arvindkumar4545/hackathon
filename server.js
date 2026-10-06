@@ -30,7 +30,7 @@ app.get('/api/status', (req, res) => {
     status: 'online',
     timestamp: new Date().toISOString(),
     database: getDbStatus(),
-    app: 'Student Smart Expense Tracker with AI & MongoDB Atlas',
+    app: 'FinPilot AI',
   });
 });
 
@@ -55,9 +55,9 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`====================================================`);
-  console.log(`🚀 Expenz AI Student Expense Tracker is running!`);
+  console.log(`🚀 FinPilot AI financial co-pilot is running!`);
   console.log(`🌐 Local Web URL: http://localhost:${PORT}`);
-  console.log(`🍃 Database: MongoDB Atlas (Cluster0)`);
-  console.log(`🤖 AI Engine: Active (Natural Language + Insights)`);
+  console.log(`🗄️ Storage: ${getDbStatus().connected ? 'MongoDB persistence enabled' : 'Temporary in-memory storage'}`);
+  console.log(`📊 Insights: Deterministic calculations from user-recorded data`);
   console.log(`====================================================`);
 });

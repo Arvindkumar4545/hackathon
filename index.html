@@ -4,14 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="color-scheme" content="light">
-  <title>SpendWise · Smart Student Pocket Money & Expense Intelligence</title>
+  <title>FinPilot AI · Your Financial Co-Pilot</title>
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="financial-insights.js"></script>
 </head>
 <body>
 
-  <!-- MONARCH-STYLE APP WRAPPER -->
-  <div class="monarch-layout">
+  <!-- FinPilot application layout -->
+  <div class="finpilot-layout">
     
     <!-- LEFT SIDEBAR -->
     <aside class="sidebar">
@@ -19,14 +20,14 @@
         <div class="brand-header">
           <div class="brand-logo">₹</div>
           <div class="brand-text-group">
-            <span class="brand-title">SpendWise</span>
-            <span class="brand-edition">Student Edition</span>
+            <span class="brand-title">FinPilot AI</span>
+            <span class="brand-edition">Financial Co-Pilot</span>
           </div>
         </div>
 
         <div class="sidebar-db-status" id="sidebarDbStatus">
           <span class="pulse-dot"></span>
-          <span id="dbStatusLabel">MongoDB Atlas</span>
+          <span id="dbStatusLabel">Secure account data</span>
         </div>
 
         <!-- Sidebar Navigation Items -->
@@ -63,6 +64,11 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
             <span>AI Coach</span>
           </button>
+          <button class="nav-item copilot-nav" data-tab="twin"><span>🤖</span><span>Financial Twin</span></button>
+          <button class="nav-item copilot-nav" data-tab="what-if"><span>↗</span><span>What If?</span></button>
+          <button class="nav-item copilot-nav" data-tab="insights"><span>⌕</span><span>Spending Detective</span></button>
+          <button class="nav-item copilot-nav" data-tab="future"><span>◷</span><span>Financial Future</span></button>
+          <button class="nav-item copilot-nav" data-tab="challenges"><span>✓</span><span>Money Challenges</span></button>
         </nav>
       </div>
 
@@ -72,7 +78,7 @@
           <div class="user-avatar-circle">🎓</div>
           <div class="user-details">
             <span class="user-fullname" id="navUserName">Student User</span>
-            <span class="user-budget-text" id="navUserBudget">₹5,000 / mo</span>
+            <span class="user-budget-text" id="navUserBudget">No spending limit set</span>
           </div>
         </div>
         <div class="auth-btn-row" id="authBtnRow">
@@ -107,7 +113,7 @@
           </button>
           <button class="btn btn-primary" id="openAddExpenseBtn">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-            <span>+ Add Expense</span>
+            <span>Add Transaction</span>
           </button>
         </div>
       </header>
@@ -119,9 +125,9 @@
         <section class="widget-card onboarding-banner" id="onboardingTourCard">
           <div class="onboarding-header">
             <div>
-              <span class="badge-tag blue">3-Step Student Pocket Money System</span>
-              <h2 class="onboard-heading">Never run out of pocket money before the month ends.</h2>
-              <p class="onboard-sub">SpendWise automatically calculates your safe daily spending allowance and detects canteen micro-spending before you overspend.</p>
+                <span class="badge-tag blue">Personal Finance Intelligence</span>
+                <h2 class="onboard-heading">Understand your money. Make your next move with confidence.</h2>
+                <p class="onboard-sub">FinPilot turns the income, expenses and goals you record into clear patterns, scenarios and explainable recommendations. Your entries stay yours—there is no preloaded financial data.</p>
             </div>
           </div>
 
@@ -130,7 +136,7 @@
               <div class="step-num">1</div>
               <div class="step-content">
                 <h4>Set Monthly Pocket Limit</h4>
-                <p>Define your monthly pocket allowance (e.g. ₹5,000) and choose a 50/30/20 target.</p>
+                <p>Record your income and expenses to establish your actual monthly baseline.</p>
               </div>
             </div>
 
@@ -138,7 +144,7 @@
               <div class="step-num">2</div>
               <div class="step-content">
                 <h4>Live-Type Any Expense</h4>
-                <p>Type casual text like <em>"180 canteen lunch"</em> — AI auto-detects category & amount in 2 seconds.</p>
+                <p>Enter transactions directly or use the natural-language entry assistant.</p>
               </div>
             </div>
 
@@ -146,19 +152,11 @@
               <div class="step-num">3</div>
               <div class="step-content">
                 <h4>Track Safe Daily Cap</h4>
-                <p>Stay within your daily limit (e.g. ₹160/day) with instant 80% caution alerts.</p>
+                <p>Explore evidence-based spending patterns, goal plans and what-if scenarios.</p>
               </div>
             </div>
           </div>
 
-          <!-- Scenario Switchers (Demonstrates what user can do) -->
-          <div class="scenarios-bar">
-            <span class="scenario-label">Try Demo Scenarios:</span>
-            <button class="scenario-btn" data-scenario="normal">🍕 Regular College Week</button>
-            <button class="scenario-btn" data-scenario="exam">📚 Exam Prep & Books</button>
-            <button class="scenario-btn" data-scenario="party">🎉 Outing & Cafe Trip</button>
-            <button class="scenario-btn" data-scenario="reset">🔄 Reset Data</button>
-          </div>
         </section>
 
         <!-- 2. REAL-TIME LIVE EXPENSE SCANNER WIDGET -->
@@ -168,14 +166,14 @@
               <span class="pulse-icon">⚡</span>
               <span>Real-Time Live Spending Scanner</span>
             </div>
-            <span class="scanner-subtext">Type any expense in plain words (e.g. <em>"180 mess lunch"</em> or <em>"350 metro pass"</em>)</span>
+            <span class="scanner-subtext">Describe a real transaction in your own words. Review the parsed details before saving.</span>
           </div>
 
           <form id="liveDetectorForm" class="scanner-form-row">
             <div class="scanner-input-wrap">
               <input type="text" id="liveDetectorInput" placeholder="Type amount & description to see live instant detection..." autocomplete="off">
             </div>
-            <button type="submit" class="btn btn-primary btn-record">Save Expense</button>
+            <button type="submit" class="btn btn-primary btn-record">Save Transaction</button>
           </form>
 
           <!-- Live Detection Tag Bar -->
@@ -187,47 +185,38 @@
               <span class="live-pill" id="pillDetectedNote">Note: -</span>
               <span class="live-pill" id="pillDetectedMode">Mode: UPI</span>
             </div>
-            <div class="live-impact-preview" id="liveImpactSummary">Remaining after: ₹5,000</div>
+            <div class="live-impact-preview" id="liveImpactSummary">Enter an actual transaction to preview it.</div>
           </div>
 
-          <!-- Quick Micro-Expense Test Chips -->
-          <div class="scanner-quick-chips">
-            <span class="quick-chip-label">Quick Test Chips:</span>
-            <button type="button" class="scanner-chip" data-sample="140 canteen thali">🍛 140 canteen thali</button>
-            <button type="button" class="scanner-chip" data-sample="60 metro pass">🚇 60 metro pass</button>
-            <button type="button" class="scanner-chip" data-sample="40 chai & samosa">☕ 40 chai & samosa</button>
-            <button type="button" class="scanner-chip" data-sample="80 xerox & lab notes">📚 80 xerox notes</button>
-            <button type="button" class="scanner-chip" data-sample="199 mobile recharge">📱 199 recharge</button>
-          </div>
         </section>
 
         <!-- 3. FINANCIAL SUMMARY METRIC TILES -->
         <section class="metrics-tiles-grid">
           <div class="metric-tile">
             <div class="tile-top">
-              <span class="tile-label">Monthly Pocket Budget</span>
+              <span class="tile-label">Income This Month</span>
               <span class="tile-icon">💰</span>
             </div>
-            <div class="tile-number" id="valMonthlyBudget">₹5,000</div>
-            <div class="tile-footer">Monthly allowance limit</div>
+            <div class="tile-number" id="valMonthlyBudget">—</div>
+            <div class="tile-footer">From recorded transactions</div>
           </div>
 
           <div class="metric-tile">
             <div class="tile-top">
-              <span class="tile-label">Total Spent This Month</span>
+              <span class="tile-label">Expenses This Month</span>
               <span class="tile-icon">💸</span>
             </div>
-            <div class="tile-number" id="valTotalSpent">₹0</div>
-            <div class="tile-footer" id="valSpentCount">0 expenses logged</div>
+            <div class="tile-number" id="valTotalSpent">—</div>
+            <div class="tile-footer" id="valSpentCount">Sign in to view recorded activity</div>
           </div>
 
           <div class="metric-tile">
             <div class="tile-top">
-              <span class="tile-label">Remaining Balance</span>
+              <span class="tile-label">Net This Month</span>
               <span class="tile-icon">🛡️</span>
             </div>
-            <div class="tile-number" id="valRemaining">₹5,000</div>
-            <div class="tile-footer" id="valRemainingPercent">100% available</div>
+            <div class="tile-number" id="valRemaining">—</div>
+            <div class="tile-footer" id="valRemainingPercent">Based on recorded transactions</div>
           </div>
 
           <div class="metric-tile">
@@ -235,8 +224,8 @@
               <span class="tile-label">Safe Daily Allowance</span>
               <span class="tile-icon">⏱️</span>
             </div>
-            <div class="tile-number" id="valDailyCap">₹160<small>/day</small></div>
-            <div class="tile-footer" id="valDaysRemaining">for next 25 days</div>
+            <div class="tile-number" id="valDailyCap">—</div>
+            <div class="tile-footer" id="valDaysRemaining">Requires recorded activity</div>
           </div>
         </section>
 
@@ -245,7 +234,7 @@
           <div class="widget-header-row">
             <div class="widget-title-group">
               <h3 class="widget-title">Budget Consumption & Health State</h3>
-              <span class="badge badge-success" id="budgetStatusPill">Within Safe Limit</span>
+              <span class="badge" id="budgetStatusPill">Awaiting data</span>
             </div>
             <div class="budget-pct-label" id="budgetPercentageText">0%</div>
           </div>
@@ -255,18 +244,29 @@
           </div>
 
           <div class="meter-scale">
-            <span>₹0 spent</span>
+            <span>Recorded spending</span>
             <span class="scale-warn">80% Alert Threshold</span>
-            <span id="budgetMaxLabel">Limit: ₹5,000</span>
+            <span id="budgetMaxLabel">Limit not set</span>
           </div>
 
           <!-- AI Runway Forecast -->
           <div class="runway-forecast-box" id="runwayForecastBox">
             <span class="runway-icon">🚀</span>
             <div class="runway-text" id="runwayText">
-              <strong>Pocket Money Runway:</strong> At your current pace, your pocket money is on track to last the entire month comfortably!
+              Add transactions to calculate a personal spending pace.
             </div>
           </div>
+        </section>
+
+        <section class="widget-card" id="incomeVsExpensesSection">
+          <div class="widget-header-row">
+            <div>
+              <h3 class="widget-title">Income vs expenses</h3>
+              <p class="widget-desc">Monthly totals from your saved transactions only.</p>
+            </div>
+          </div>
+          <div class="chart-wrapper"><canvas id="incomeExpenseChart" aria-label="Recorded income and expenses by month"></canvas></div>
+          <p id="incomeExpenseEmpty" class="empty-table-msg">Record income and expenses to compare monthly totals.</p>
         </section>
 
         <section class="widget-card campus-lab" id="choiceLabSection" aria-labelledby="choiceLabTitle">
@@ -285,15 +285,15 @@
                 <div class="choice-option choice-option-a">
                   <span class="choice-option-label">OPTION A</span>
                   <label for="choiceAName">Choice name</label>
-                  <input id="choiceAName" type="text" maxlength="36" value="Campus canteen">
+                  <input id="choiceAName" type="text" maxlength="36" placeholder="Name option A">
                   <div class="choice-input-pair">
                     <div>
                       <label for="choiceACost">Cost per visit</label>
-                      <div class="choice-number-wrap"><span>₹</span><input id="choiceACost" type="number" min="0.01" step="1" value="80" inputmode="decimal"></div>
+                      <div class="choice-number-wrap"><span>₹</span><input id="choiceACost" type="number" min="0.01" step="1" placeholder="Cost" inputmode="decimal"></div>
                     </div>
                     <div>
                       <label for="choiceAFrequency">Visits / week</label>
-                      <input id="choiceAFrequency" type="number" min="0" max="14" step="1" value="5" inputmode="numeric">
+                      <input id="choiceAFrequency" type="number" min="0" max="14" step="1" placeholder="Visits" inputmode="numeric">
                     </div>
                   </div>
                 </div>
@@ -301,15 +301,15 @@
                 <div class="choice-option choice-option-b">
                   <span class="choice-option-label">OPTION B</span>
                   <label for="choiceBName">Choice name</label>
-                  <input id="choiceBName" type="text" maxlength="36" value="Cafe with friends">
+                  <input id="choiceBName" type="text" maxlength="36" placeholder="Name option B">
                   <div class="choice-input-pair">
                     <div>
                       <label for="choiceBCost">Cost per visit</label>
-                      <div class="choice-number-wrap"><span>₹</span><input id="choiceBCost" type="number" min="0.01" step="1" value="220" inputmode="decimal"></div>
+                      <div class="choice-number-wrap"><span>₹</span><input id="choiceBCost" type="number" min="0.01" step="1" placeholder="Cost" inputmode="decimal"></div>
                     </div>
                     <div>
                       <label for="choiceBFrequency">Visits / week</label>
-                      <input id="choiceBFrequency" type="number" min="0" max="14" step="1" value="2" inputmode="numeric">
+                      <input id="choiceBFrequency" type="number" min="0" max="14" step="1" placeholder="Visits" inputmode="numeric">
                     </div>
                   </div>
                 </div>
@@ -318,7 +318,7 @@
               <div class="choice-lab-footer-controls">
                 <div class="choice-weeks-control">
                   <label for="choiceSemesterWeeks">Semester length</label>
-                  <div class="choice-number-wrap"><input id="choiceSemesterWeeks" type="number" min="1" max="52" step="1" value="16" inputmode="numeric"><span>weeks</span></div>
+                  <div class="choice-number-wrap"><input id="choiceSemesterWeeks" type="number" min="1" max="52" step="1" placeholder="Weeks" inputmode="numeric"><span>weeks</span></div>
                 </div>
                 <div class="choice-goal-control">
                   <label for="choiceGoalSelect">Measure the gap against</label>
@@ -329,13 +329,13 @@
 
             <aside class="choice-lab-result" aria-live="polite">
               <span class="choice-result-label">COST DIFFERENCE OVER <span id="choiceWeeksLabel">16</span> WEEKS</span>
-              <strong class="choice-delta" id="choiceDelta">₹6,400</strong>
-              <p class="choice-recommendation" id="choiceRecommendation">Campus canteen costs less over the semester.</p>
+              <strong class="choice-delta" id="choiceDelta">—</strong>
+              <p class="choice-recommendation" id="choiceRecommendation">Enter the costs and frequency of both options.</p>
               <div class="choice-totals">
-                <div><span id="choiceAResultName">Campus canteen</span><strong id="choiceATotal">₹6,400</strong></div>
-                <div><span id="choiceBResultName">Cafe with friends</span><strong id="choiceBTotal">₹7,040</strong></div>
+                <div><span id="choiceAResultName">Option A</span><strong id="choiceATotal">—</strong></div>
+                <div><span id="choiceBResultName">Option B</span><strong id="choiceBTotal">—</strong></div>
               </div>
-              <p class="choice-goal-impact" id="choiceGoalImpact">That difference could cover 61% of the remaining Semester College Trip goal.</p>
+              <p class="choice-goal-impact" id="choiceGoalImpact">Enter both choices and create a goal to compare their impact.</p>
             </aside>
           </div>
         </section>
@@ -367,7 +367,7 @@
             <div class="widget-header-row">
               <div>
                 <h3 class="widget-title">Transactions Ledger</h3>
-                <p class="widget-desc">Live expenses synced to MongoDB Atlas</p>
+                <p class="widget-desc">Your account’s income and expense history</p>
               </div>
               <select id="categoryFilter" class="select-clean">
                 <option value="All">All Categories</option>
@@ -377,7 +377,10 @@
                 <option value="Entertainment">Entertainment</option>
                 <option value="Shopping">Shopping & Stationery</option>
                 <option value="Health">Health & Fitness</option>
-                <option value="Utilities">Utilities & Bills</option>
+                <option value="Utilities">Utilities</option>
+                <option value="Rent">Rent</option>
+                <option value="Bills">Bills</option>
+                <option value="Salary">Salary / income</option>
                 <option value="Other">Other</option>
               </select>
             </div>
@@ -387,7 +390,7 @@
             </div>
 
             <div class="table-container">
-              <table class="monarch-table">
+              <table class="finpilot-table">
                 <thead>
                   <tr>
                     <th>Item / Description</th>
@@ -405,7 +408,6 @@
               <div id="tableEmptyState" class="empty-table-msg hidden">
                 <p>No transactions found. Use the live scanner above to record one!</p>
               </div>
-            </div>
           </section>
         </div>
 
@@ -422,15 +424,15 @@
             <div class="bill-split-fields">
               <div class="form-group">
                 <label for="splitBillAmount">Total bill (₹)</label>
-                <input id="splitBillAmount" type="number" min="0.01" step="0.01" value="840" inputmode="decimal">
+                <input id="splitBillAmount" type="number" min="0.01" step="0.01" placeholder="Enter bill total" inputmode="decimal">
               </div>
               <div class="form-group">
                 <label for="splitPeople">People, including you</label>
-                <input id="splitPeople" type="number" min="2" max="20" step="1" value="4" inputmode="numeric">
+                <input id="splitPeople" type="number" min="2" max="20" step="1" placeholder="Number of people" inputmode="numeric">
               </div>
               <div class="form-group">
                 <label for="splitPaidAmount">Amount you paid (₹)</label>
-                <input id="splitPaidAmount" type="number" min="0" step="0.01" value="840" inputmode="decimal">
+                <input id="splitPaidAmount" type="number" min="0" step="0.01" placeholder="Amount you paid" inputmode="decimal">
               </div>
               <div class="form-group">
                 <label for="splitPaymentMethod">Payment method</label>
@@ -443,7 +445,7 @@
               </div>
               <div class="form-group">
                 <label for="splitDescription">What was it for?</label>
-                <input id="splitDescription" type="text" maxlength="70" value="Shared campus meal">
+                <input id="splitDescription" type="text" maxlength="70" placeholder="Describe the shared bill">
               </div>
               <div class="form-group">
                 <label for="splitCategory">Expense category</label>
@@ -460,10 +462,10 @@
 
             <aside class="bill-split-result" aria-live="polite">
               <span class="bill-split-result-label">YOUR SHARE</span>
-              <strong class="bill-split-share" id="splitPerPerson">₹210.00</strong>
-              <div class="bill-split-settlement" id="splitSettlement">Group owes you ₹630.00</div>
-              <p class="bill-split-summary" id="splitSummary">You paid ₹840.00 of an ₹840.00 bill split 4 ways.</p>
-              <button type="button" class="btn btn-primary" id="logBillShareBtn">Log my ₹210.00 share</button>
+              <strong class="bill-split-share" id="splitPerPerson">—</strong>
+              <div class="bill-split-settlement" id="splitSettlement">Enter bill details to calculate the split.</div>
+              <p class="bill-split-summary" id="splitSummary">Your details are used to calculate only your portion.</p>
+              <button type="button" class="btn btn-primary" id="logBillShareBtn" disabled>Calculate your share first</button>
               <span class="bill-split-note">Only your share is added to your expense history.</span>
             </aside>
           </div>
@@ -482,19 +484,19 @@
           <div class="allocator-grid">
             <div class="alloc-card alloc-needs">
               <span class="alloc-label">50% Needs</span>
-              <div class="alloc-amount" id="allocNeedsVal">₹2,500</div>
+              <div class="alloc-amount" id="allocNeedsVal">—</div>
               <p class="alloc-sub">College canteen meals, bus/metro passes, semester books & xerox.</p>
             </div>
 
             <div class="alloc-card alloc-wants">
               <span class="alloc-label">30% Wants</span>
-              <div class="alloc-amount" id="allocWantsVal">₹1,500</div>
+              <div class="alloc-amount" id="allocWantsVal">—</div>
               <p class="alloc-sub">Weekend outings with friends, movies, coffee, gaming & subscriptions.</p>
             </div>
 
             <div class="alloc-card alloc-savings">
               <span class="alloc-label">20% Savings</span>
-              <div class="alloc-amount" id="allocSavingsVal">₹1,000</div>
+              <div class="alloc-amount" id="allocSavingsVal">—</div>
               <p class="alloc-sub">Emergency reserve for unexpected college projects, repairs, or trips.</p>
             </div>
           </div>
@@ -505,45 +507,13 @@
           <div class="widget-header-row">
             <div>
               <h3 class="widget-title">Student Savings Goals</h3>
-              <p class="widget-desc">Set money aside for semester trips, gadgets, or certificates</p>
+              <p class="widget-desc">Set a target, current savings and optional date to calculate a plan.</p>
             </div>
             <button class="btn btn-secondary btn-sm" id="btnAddGoal">+ New Goal</button>
           </div>
 
           <div class="goals-grid" id="goalsListGrid">
-            <div class="goal-card">
-              <div class="goal-top">
-                <span class="goal-icon">🎒</span>
-                <div>
-                  <h4 class="goal-title">Semester College Trip</h4>
-                  <span class="goal-target">Target: ₹3,000</span>
-                </div>
-              </div>
-              <div class="goal-progress-bar">
-                <div class="goal-fill" style="width: 65%;"></div>
-              </div>
-              <div class="goal-footer">
-                <span>Saved: ₹1,950</span>
-                <span style="color: #059669; font-weight: 600;">65% Completed</span>
-              </div>
-            </div>
-
-            <div class="goal-card">
-              <div class="goal-top">
-                <span class="goal-icon">🎧</span>
-                <div>
-                  <h4 class="goal-title">Wireless ANC Earbuds</h4>
-                  <span class="goal-target">Target: ₹2,200</span>
-                </div>
-              </div>
-              <div class="goal-progress-bar">
-                <div class="goal-fill" style="width: 40%;"></div>
-              </div>
-              <div class="goal-footer">
-                <span>Saved: ₹880</span>
-                <span style="color: #2563eb; font-weight: 600;">40% Completed</span>
-              </div>
-            </div>
+            <p class="empty-table-msg">Create a goal to see its progress and monthly savings plan.</p>
           </div>
         </section>
 
@@ -553,49 +523,106 @@
             <div class="advisor-title-box">
               <div class="advisor-avatar">🤖</div>
               <div>
-                <h3 class="widget-title">Expenz AI Financial Health Coach</h3>
-                <p class="widget-desc">Automated health audits and instant financial Q&A</p>
+                <h3 class="widget-title">Financial Health Doctor</h3>
+                <p class="widget-desc">A savings-rate measure (50 + rate in percentage points, bounded 0–100), not a credit score.</p>
               </div>
             </div>
             <div class="health-score-pill">
               <span>Financial Health:</span>
-              <strong id="healthScoreNum">94</strong>/100
+              <strong id="healthScoreNum">—</strong>/100
             </div>
           </div>
 
           <div class="advisor-tips-grid" id="adviceCardsGrid">
-            <div class="tip-card tip-success">
-              <span class="tip-tag">Healthy Pace</span>
-              <h4>Comfortable Budget Margin</h4>
-              <p>Your spending pace is healthy. Keep logging small daily purchases to maintain accurate forecasts.</p>
-            </div>
-            <div class="tip-card tip-neutral">
-              <span class="tip-tag">UPI Micro-Leak Warning</span>
-              <h4>Small Transactions Check</h4>
-              <p>Over 60% of student funds disappear on small ₹20–₹80 canteen snacks. Review recent items regularly.</p>
-            </div>
+            <p class="empty-table-msg">Record income and expenses across at least two months to receive a measured health assessment.</p>
           </div>
 
           <!-- Interactive Q&A Coach -->
           <div class="chat-thread-container">
             <div class="chat-bubbles-stack" id="chatThread">
-              <div class="bubble bubble-assistant">
-                <strong>Financial Coach:</strong> Ask me how to save more, reduce mess expenses, or plan your pocket money allocation!
-              </div>
+              <div class="bubble bubble-assistant">Ask about your recorded transactions, monthly net or savings goals. I will explain when there is not enough data to answer.</div>
             </div>
 
             <div class="quick-chips-row">
-              <button class="quick-chip" data-query="How can I save ₹1,000 this month?">💡 Save ₹1,000 this month</button>
-              <button class="quick-chip" data-query="Explain the 50/30/20 rule for students">📊 50/30/20 Rule</button>
-              <button class="quick-chip" data-query="How to reduce college canteen expenses?">🍔 Canteen Food Tips</button>
-              <button class="quick-chip" data-query="What to do if my budget is exceeded?">🚨 Overspent recovery plan</button>
+              <button class="quick-chip" data-query="Summarize my spending this month">This month’s summary</button>
+              <button class="quick-chip" data-query="Which categories changed the most?">Category changes</button>
             </div>
 
             <form id="advisorChatForm" class="chat-input-box">
-              <input type="text" id="advisorChatInput" placeholder="Ask your financial question (e.g. How to budget with ₹5,000?)..." autocomplete="off">
+              <input type="text" id="advisorChatInput" placeholder="Ask about your recorded finances..." autocomplete="off">
               <button type="submit" class="btn btn-primary btn-sm">Ask Question</button>
             </form>
           </div>
+        </section>
+
+        <section class="copilot-grid" aria-label="Financial co-pilot tools">
+          <section class="widget-card copilot-card" id="financialTwinSection">
+            <div class="widget-header-row">
+              <div><span class="feature-kicker">FINANCIAL TWIN</span><h3 class="widget-title">Ask about your money</h3><p class="widget-desc">Answers are calculated from your own saved records.</p></div>
+            </div>
+            <form id="twinQueryForm" class="tool-form">
+              <input id="twinQueryInput" maxlength="240" placeholder="e.g. Why was my spending higher this month?" required>
+              <button class="btn btn-primary" type="submit">Ask</button>
+            </form>
+            <div id="twinAnswer" class="analysis-result" aria-live="polite">Your financial summary will appear here after you record transactions.</div>
+          </section>
+
+          <section class="widget-card copilot-card" id="whatIfSection">
+            <div class="widget-header-row">
+              <div><span class="feature-kicker">WHAT IF?</span><h3 class="widget-title">Test a monthly change</h3><p class="widget-desc">Compare a simple 12-month estimate using your recent logged income and spending.</p></div>
+            </div>
+            <form id="whatIfForm" class="tool-form">
+              <label for="whatIfMode">Monthly change</label>
+              <select id="whatIfMode"><option value="save">Save more</option><option value="income">Earn more</option><option value="spend">Spend more</option></select>
+              <label for="whatIfSaving">Amount (₹)</label>
+              <input id="whatIfSaving" type="number" min="0" step="100" placeholder="Enter an amount" required>
+              <button class="btn btn-primary" type="submit">Calculate</button>
+            </form>
+            <div id="whatIfResult" class="analysis-result" aria-live="polite">No projection until income has been recorded.</div>
+          </section>
+
+          <section class="widget-card copilot-card" id="insightsSection">
+            <div class="widget-header-row">
+              <div><span class="feature-kicker">EVIDENCE-BASED ANALYSIS</span><h3 class="widget-title">Spending Detective & Money Leaks</h3><p class="widget-desc">Only patterns supported by your dated transaction history are shown.</p></div>
+            </div>
+            <div id="spendingPatterns" class="analysis-list"><p class="empty-table-msg">Record transactions in consecutive months to compare categories.</p></div>
+            <h4 class="analysis-subheading">Recurring merchants to review</h4>
+            <div id="moneyLeaks" class="analysis-list"><p class="empty-table-msg">Repeated merchants will appear here when your records support the pattern.</p></div>
+          </section>
+
+          <section class="widget-card copilot-card" id="purchaseCheckSection">
+            <div class="widget-header-row">
+              <div><span class="feature-kicker">PURCHASE CHECK</span><h3 class="widget-title">Before you buy</h3><p class="widget-desc">A quick affordability signal, not financial advice.</p></div>
+            </div>
+            <form id="purchaseCheckForm" class="tool-form">
+              <label for="purchaseAmount">Planned purchase price (₹)</label>
+              <input id="purchaseAmount" type="number" min="0.01" step="0.01" placeholder="Enter a price" required>
+              <button class="btn btn-primary" type="submit">Check affordability</button>
+            </form>
+            <div id="purchaseCheckResult" class="analysis-result" aria-live="polite">Record this month’s income and expenses for an affordability check.</div>
+          </section>
+
+          <section class="widget-card copilot-card" id="cashFlowSection">
+            <div class="widget-header-row">
+              <div><span class="feature-kicker">CASH-FLOW OUTLOOK</span><h3 class="widget-title">Month-end estimate</h3><p class="widget-desc">Straight-line estimate from spending logged so far; not a guarantee.</p></div>
+            </div>
+            <div id="cashFlowResult" class="analysis-result" aria-live="polite">Record expenses and income to estimate month-end cash flow.</div>
+          </section>
+
+          <section class="widget-card copilot-card" id="futureSection">
+            <div class="widget-header-row">
+              <div><span class="feature-kicker">ESTIMATED SCENARIO</span><h3 class="widget-title">Financial future</h3><p class="widget-desc">An illustrative path based on the latest three logged months.</p></div>
+            </div>
+            <div id="futureResult" class="analysis-result" aria-live="polite">At least one month of recorded income is needed for a projection.</div>
+          </section>
+
+          <section class="widget-card copilot-card" id="challengesSection">
+            <div class="widget-header-row">
+              <div><span class="feature-kicker">PERSONAL FINANCE HABITS</span><h3 class="widget-title">Money check-ins</h3><p class="widget-desc">Optional reminders; completing one does not imply a saving or financial result.</p></div>
+            </div>
+            <div id="challengeList" class="challenge-list"></div>
+            <p class="challenge-progress" id="challengeProgress" aria-live="polite"></p>
+          </section>
         </section>
 
       </div>
@@ -665,7 +692,10 @@
               <option value="Entertainment">Entertainment</option>
               <option value="Shopping">Shopping & Stationery</option>
               <option value="Health">Health & Fitness</option>
-              <option value="Utilities">Utilities & Bills</option>
+              <option value="Utilities">Utilities</option>
+              <option value="Rent">Rent</option>
+              <option value="Bills">Bills</option>
+              <option value="Salary">Salary / income</option>
               <option value="Other">Other</option>
             </select>
           </div>
@@ -682,6 +712,10 @@
         </div>
 
         <div class="form-row-2">
+          <div class="form-group">
+            <label for="expType">Transaction Type</label>
+            <select id="expType"><option value="expense">Expense</option><option value="income">Income</option></select>
+          </div>
           <div class="form-group">
             <label for="expDate">Date *</label>
             <input type="date" id="expDate" required>
@@ -714,14 +748,7 @@
 
         <div class="form-group">
           <label for="budgetInputVal">Monthly Target Allowance (₹) *</label>
-          <input type="number" id="budgetInputVal" step="100" min="1" placeholder="5000" required>
-        </div>
-
-        <div class="preset-pills-row">
-          <button type="button" class="preset-pill" data-amount="3000">₹3,000</button>
-          <button type="button" class="preset-pill" data-amount="5000">₹5,000</button>
-          <button type="button" class="preset-pill" data-amount="8000">₹8,000</button>
-          <button type="button" class="preset-pill" data-amount="12000">₹12,000</button>
+          <input type="number" id="budgetInputVal" step="100" min="1" placeholder="Enter your monthly limit" required>
         </div>
 
         <div class="modal-actions">
@@ -749,12 +776,16 @@
         <div class="form-row-2">
           <div class="form-group">
             <label for="goalTargetInput">Target Amount (₹) *</label>
-            <input type="number" id="goalTargetInput" min="100" placeholder="3000" required>
+            <input type="number" id="goalTargetInput" min="0.01" placeholder="Enter your target" required>
           </div>
           <div class="form-group">
             <label for="goalSavedInput">Saved So Far (₹)</label>
-            <input type="number" id="goalSavedInput" min="0" placeholder="500" value="0">
+            <input type="number" id="goalSavedInput" min="0" placeholder="Enter amount saved" value="0">
           </div>
+        </div>
+        <div class="form-group">
+          <label for="goalDateInput">Target date (optional)</label>
+          <input type="date" id="goalDateInput">
         </div>
 
         <div class="modal-actions">
@@ -790,7 +821,7 @@
 
         <div class="auth-error-box hidden" id="loginFeedback"></div>
 
-        <button type="submit" class="btn btn-primary btn-block">Log In to MongoDB Atlas</button>
+        <button type="submit" class="btn btn-primary btn-block">Log In</button>
       </form>
 
       <!-- Signup Form -->
@@ -812,12 +843,12 @@
 
         <div class="form-group">
           <label for="signupBudget">Monthly Pocket Budget (₹)</label>
-          <input type="number" id="signupBudget" placeholder="5000" value="5000" min="100">
+          <input type="number" id="signupBudget" placeholder="Monthly spending limit (optional)" min="1">
         </div>
 
         <div class="auth-error-box hidden" id="signupFeedback"></div>
 
-        <button type="submit" class="btn btn-primary btn-block">Create MongoDB Account</button>
+        <button type="submit" class="btn btn-primary btn-block">Create Account</button>
       </form>
     </div>
   </dialog>

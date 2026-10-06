@@ -27,7 +27,7 @@ const UserSchema = new mongoose.Schema({
   },
   monthlyBudget: {
     type: Number,
-    default: 5000,
+    default: 0,
     min: 0,
   },
   currency: {
