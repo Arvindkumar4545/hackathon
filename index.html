@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Expense Tracker</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app">
+    <header class="header">
+      <div>
+        <p class="eyebrow">STUDENT FINANCE</p>
+        <h1>Expense Tracker</h1>
+        <p class="subtitle">Know where your pocket money goes.</p>
+      </div>
+      <button id="budgetBtn" class="secondary-btn">Set Budget</button>
+    </header>
+
+    <section class="summary-grid">
+      <article class="card">
+        <span>Monthly Budget</span>
+        <strong id="budgetAmount">₹0</strong>
+      </article>
+      <article class="card">
+        <span>Spent This Month</span>
+        <strong id="spentAmount">₹0</strong>
+      </article>
+      <article class="card">
+        <span>Remaining</span>
+        <strong id="remainingAmount">₹0</strong>
+      </article>
+    </section>
+
+    <section class="card progress-card">
+      <div class="section-heading">
+        <div>
+          <h2>Budget progress</h2>
+          <p id="progressText">Set a budget to start tracking.</p>
+        </div>
+        <button id="addBtn" class="primary-btn">+ Add Expense</button>
+      </div>
+      <div class="progress-track">
+        <div id="progressBar" class="progress-bar"></div>
+      </div>
+    </section>
+
+    <section class="content-grid">
+      <article class="card">
+        <div class="section-heading">
+          <div>
+            <h2>Where your money went</h2>
+            <p>This month by category</p>
+          </div>
+        </div>
+        <div id="categoryBreakdown" class="category-list"></div>
+      </article>
+
+      <article class="card">
+        <div class="section-heading">
+          <div>
+            <h2>Recent expenses</h2>
+            <p>Your latest transactions</p>
+          </div>
+        </div>
+        <div id="transactionList" class="transaction-list"></div>
+      </article>
+    </section>
+  </main>
+
+  <dialog id="expenseDialog">
+    <form id="expenseForm" method="dialog" class="dialog-card">
+      <div class="dialog-header">
+        <div>
+          <p class="eyebrow">NEW TRANSACTION</p>
+          <h2>Add expense</h2>
+        </div>
+        <button type="button" id="closeExpense" class="icon-btn">×</button>
+      </div>
+
+      <label>
+        Amount
+        <input id="amount" type="number" min="0.01" step="0.01" placeholder="e.g. 120" required>
+      </label>
+
+      <label>
+        Category
+        <select id="category" required>
+          <option value="">Choose a category</option>
+          <option>Food</option>
+          <option>Transport</option>
+          <option>Education</option>
+          <option>Entertainment</option>
+          <option>Shopping</option>
+          <option>Other</option>
+        </select>
+      </label>
+
+      <label>
+        Note
+        <input id="note" type="text" maxlength="80" placeholder="e.g. Lunch">
+      </label>
+
+      <label>
+        Date
+        <input id="date" type="date" required>
+      </label>
+
+      <button class="primary-btn" type="submit">Save Expense</button>
+    </form>
+  </dialog>
+
+  <dialog id="budgetDialog">
+    <form id="budgetForm" method="dialog" class="dialog-card">
+      <div class="dialog-header">
+        <div>
+          <p class="eyebrow">MONTHLY PLAN</p>
+          <h2>Set pocket-money budget</h2>
+        </div>
+        <button type="button" id="closeBudget" class="icon-btn">×</button>
+      </div>
+      <label>
+        Monthly budget
+        <input id="budgetInput" type="number" min="1" step="1" placeholder="e.g. 5000" required>
+      </label>
+      <button class="primary-btn" type="submit">Save Budget</button>
+    </form>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
